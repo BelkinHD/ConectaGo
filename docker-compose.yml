@@ -1,0 +1,31 @@
+services:
+  db:
+    image: mysql:8.3
+    restart: always
+    environment:
+      MYSQL_DATABASE: ConectaGo
+      MYSQL_USER: Osvaldo
+      MYSQL_PASSWORD: B3lkingHD
+      MYSQL_ROOT_PASSWORD: B3lkingHD
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  web:
+    build: .
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
+    volumes:
+      - .:/code
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_NAME=ConectaGo
+      - DJANGO_DB_USER=Osvaldo
+      - DJANGO_DB_PASSWORD=B3lkingHD
+
+volumes:
+  db_data:
