@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block hero_section %}
+<style>
+  .validar-cita-container {
+    display: flex;
+    min-height: 80vh;
+    background-color: #fbbf24; /* Yellow background */
+    gap: 1rem; /* Reduced space between form and professional info */
+    padding: 1rem; /* Reduced padding around container */
+  }
+  .form-container {
+    flex: 1;
+    background: white;
+    padding: 1.5rem 2rem; /* Reduced padding */
+    max-width: 480px;
+    border-radius: 6px; /* Slightly smaller radius */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Lighter shadow */
+  }
+  .professional-info {
+    flex: 1;
+    background: #d1d5db; /* Light gray */
+    padding: 1.5rem 2rem; /* Reduced padding */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 6px; /* Slightly smaller radius */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Lighter shadow */
+  }
+  .professional-photo {
+    width: 100px; /* Smaller photo */
+    height: 100px;
+    border-radius: 6px;
+    object-fit: cover;
+    margin-bottom: 0.75rem; /* Reduced margin */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .professional-name {
+    font-weight: 700;
+    font-size: 1.25rem; /* Smaller font */
+    margin-bottom: 0.2rem;
+  }
+  .professional-title {
+    font-style: italic;
+    margin-bottom: 1rem; /* Reduced margin */
+    color: #555;
+  }
+  .appointment-info {
+    background: #e5e7eb; /* lighter gray */
+    padding: 0.75rem 1rem; /* Reduced padding */
+    border-radius: 6px; /* Smaller radius */
+    width: 100%;
+    margin-bottom: 1rem; /* Reduced margin */
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.05);
+  }
+  .appointment-info p {
+    margin: 0.3rem 0; /* Reduced margin */
+    font-size: 0.9rem; /* Smaller font */
+    color: #333;
+    display: flex;
+    align-items: center;
+  }
+  .appointment-info p strong {
+    margin-right: 0.4rem;
+  }
+  .appointment-info p.date-time {
+    font-weight: 700;
+    font-size: 1rem; /* Smaller font */
+    color: #1f2937; /* darker text */
+  }
+  .appointment-info p.date-time svg {
+    margin-right: 0.4rem;
+    fill: #2563eb; /* blue icon */
+  }
+  .appointment-info p.timezone {
+    font-size: 0.85rem; /* Smaller font */
+    color: #555;
+    margin-left: 1.4rem; /* Reduced indent */
+  }
+  .appointment-info p.change-date-link {
+    text-align: right;
+    margin-top: 0.3rem; /* Reduced margin */
+  }
+  .appointment-info p.change-date-link a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .appointment-info p.change-date-link a:hover {
+    text-decoration: underline;
+  }
+  .back-link {
+    margin-bottom: 0.75rem; /* Reduced margin */
+    display: inline-block;
+    font-weight: bold;
+    color: #000;
+    text-decoration: none;
+  }
+  .submit-button {
+    background-color: #2563eb; /* Blue */
+    color: white;
+    padding: 0.4rem 0.8rem; /* Reduced padding */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem; /* Smaller font */
+  }
+  .submit-button:hover {
+    background-color: #1d4ed8;
+  }
+  label {
+    display: block;
+    margin-top: 0.75rem; /* Reduced margin */
+    font-weight: 600;
+    font-size: 0.9rem; /* Smaller font */
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"] {
+    width: 100%;
+    padding: 0.35rem; /* Reduced padding */
+    margin-top: 0.2rem; /* Reduced margin */
+    margin-bottom: 0.75rem; /* Reduced margin */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem; /* Smaller font */
+  }
+
+</style>
+
+<div class="validar-cita-container">
+  <form method="post" action="{% url 'ConectaGo:validar_cita' %}" style="display: flex; flex: 1; gap: 1rem;">
+    {% csrf_token %}
+    <input type="hidden" name="service_id" value="{{ service.id }}">
+    <input type="hidden" name="date" value="{{ date }}">
+    <input type="hidden" name="time" value="{{ time }}">
+    <input type="hidden" name="username" value="{{ username }}">
+
+    <div class="form-container" style="flex: 1;">
+      <a href="javascript:history.back()" class="back-link">&larr; Volver</a>
+      <h1>Validar Agenda</h1>
+
+      <label for="direccion">Dirección</label>
+      <input type="text" id="direccion" name="direccion" value="{{ client_profile.direccion|default_if_none:'' }}" required>
+
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" name="nombre" value="{{ client_profile.nombre|default_if_none:user.first_name }}" required>
+
+      <label for="apellido">Apellido</label>
+      <input type="text" id="apellido" name="apellido" value="{{ client_profile.apellido|default_if_none:user.last_name }}" required>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ user.email }}" required>
+
+      <label for="telefono">Número de Teléfono</label>
+      <input type="tel" id="telefono" name="telefono" value="{{ client_profile.telefono|default_if_none:'' }}" required>
+
+      <button type="submit" class="submit-button">Agendar</button>
+    </div>
+
+    <div class="professional-info" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+      {% if professional_profile.foto %}
+        <img src="{{ professional_profile.foto.url }}" alt="Foto de {{ professional_profile.nombre }}" class="professional-photo">
+      {% else %}
+        <img src="{% static 'default_profile.png' %}" alt="Foto por defecto" class="professional-photo">
+      {% endif %}
+      <div class="professional-name">{{ professional_profile.nombre }} {{ professional_profile.apellido }}</div>
+      <div class="professional-title">{{ professional_profile.especialidad }}</div>
+
+      <div class="appointment-info" style="width: 100%;">
+        <p class="date-time">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h.5A1.5 1.5 0 0 1 15 2.5v11A1.5 1.5 0 0 1 13.5 15h-11A1.5 1.5 0 0 1 1 13.5v-11A1.5 1.5 0 0 1 2.5 1H3v-.5a.5.5 0 0 1 .5-.5zM2.5 2a.5.5 0 0 0-.5.5V4h12V2.5a.5.5 0 0 0-.5-.5h-11z"/>
+            <path d="M1 5v8.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5V5H1z"/>
+          </svg>
+          {{ date }} {{ time }}
+        </p>
+        <p class="timezone">Zona horaria: Santiago</p>
+        {% if username %}
+        <p class="change-date-link"><a href="{% url 'ConectaGo:professional_schedule' username %}">Cambiar la fecha</a></p>
+        {% else %}
+        <p class="change-date-link"><a href="{% url 'ConectaGo:home' %}">Volver al inicio</a></p>
+        {% endif %}
+      </div>
+
+      <label for="mensaje" style="align-self: flex-start; margin-top: 1rem; font-weight: 600;">Especifica tu problema</label>
+      <textarea id="mensaje" name="mensaje" rows="5" style="width: 100%; border-radius: 4px; border: 1px solid #ccc; padding: 0.5rem;" placeholder="Describe aquí tu problema o detalles adicionales..."></textarea>
+
+      <img src="{% static '/ConectaGo/static/img/CgLogo.png' %}" alt="ConectaGO Logo" style="max-width: 200px; margin-top: 2rem;">
+    </div>
+  </form>
+</div>
+
+{% if show_success_popup %}
+<style>
+  /* Modal container */
+  .modal {
+    display: block; /* Show the modal */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+
+  /* Modal content box */
+  .modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+  }
+
+  /* Modal header */
+  .modal-header {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  /* Modal body text */
+  .modal-body {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    color: #555;
+    white-space: pre-wrap;
+  }
+
+  /* Modal buttons container */
+  .modal-buttons {
+    text-align: right;
+  }
+
+  /* Button styles */
+  .modal-button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-left: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .modal-button:hover {
+    background-color: #1d4ed8;
+  }
+</style>
+
+<div id="successModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+  <div class="modal-content">
+    <div class="modal-header" id="modalTitle">Cita Agendada</div>
+    <div class="modal-body" id="modalDesc">
+      La cita fue agendada con éxito.
+      {% if client_message %}
+      <br><br>
+      <strong>Mensaje del cliente:</strong>
+      <br>
+      {{ client_message|linebreaksbr|escape }}
+      {% endif %}
+    </div>
+    <div class="modal-buttons">
+      <button id="modalCloseBtn" class="modal-button" aria-label="Cerrar ventana">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('modalCloseBtn').addEventListener('click', function() {
+    // Hide the modal
+    document.getElementById('successModal').style.display = 'none';
+    // Redirect to home page
+    window.location.href = "{% url 'ConectaGo:home' %}";
+  });
+</script>
+{% endif %}
+
+{% endblock %}

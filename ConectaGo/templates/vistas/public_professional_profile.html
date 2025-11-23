@@ -1,0 +1,623 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block hero_section %}
+{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-16">
+  <div class="flex flex-col md:flex-row md:space-x-10">
+    <!-- Left column: Doctor info -->
+    <section class="md:w-3/5 bg-white rounded-lg shadow-md p-6">
+      <div class="flex flex-col md:flex-row md:space-x-6">
+        <img alt="Retrato profesional de {{ professional_profile.nombre }} {{ professional_profile.apellido }}" class="w-40 h-40 rounded-lg object-cover mx-auto md:mx-0" height="160"
+          src="{{ professional_profile.foto_url }}" width="160" />
+        <div class="mt-4 md:mt-0 flex flex-col justify-between">
+          <div>
+              <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                {{ professional_profile.nombre }} {{ professional_profile.apellido }}
+                {% if professional_profile.certification_status == 'accepted' %}
+                  <div class="relative group inline-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-label="Certificado">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <div class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10 hidden group-hover:block">
+                      Este usuario está certificado
+                    </div>
+                  </div>
+                {% endif %}
+              </h1>
+              <p class="text-[#fbbf24] font-semibold mt-1 text-lg">
+                {{ professional_profile.especialidad }}
+              </p>
+            <div class="flex items-center space-x-2 mt-2">
+              <span class="text-yellow-400 font-semibold flex items-center">
+                {% for i in "12345" %}
+                  {% if avg_rating|floatformat:1 >= i %}
+                    <i class="fas fa-star"></i>
+                  {% elif avg_rating|floatformat:1 > i|add:"-1" %}
+                    <i class="fas fa-star-half-alt"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+                <span class="ml-1">{{ avg_rating|default:"0.0" }}</span>
+              </span>
+              <span class="text-gray-600 text-sm">
+                ({{ total_reviews|default:"0" }} opiniones)
+              </span>
+            </div>
+          </div>
+          <a href="{% url 'ConectaGo:professional_schedule' professional_profile.user.username %}" id="bookAppointmentBtn" class="mt-6 bg-[#fbbf24] text-white px-6 py-2 rounded font-semibold hover:bg-yellow-500 transition w-full md:w-auto inline-block text-center">
+            Reservar hora
+          </a>
+        </div>
+      </div>
+      <div class="mt-8 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Sobre {{ professional_profile.nombre }} {{ professional_profile.apellido }}
+        </h2>
+        <p class="text-gray-700 leading-relaxed">
+          {{ professional_profile.descripcion|linebreaksbr }}
+        </p>
+      </div>
+      <div class="mt-8 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Fotos Profesionales
+        </h2>
+        <div class="flex flex-wrap gap-6">
+          {% if photos %}
+            {% for photo in photos %}
+              <div class="relative w-36 h-36 rounded-lg overflow-hidden shadow-lg cursor-pointer group" tabindex="0" aria-label="Ver foto profesional ampliada">
+                <img src="{{ photo.photo.url }}" alt="{{ photo.description }}" class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110 group-focus:scale-110" />
+                {% if photo.description %}
+                  <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs p-2 truncate" title="{{ photo.description }}">
+                    {{ photo.description }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <span class="text-gray-500">No hay fotos disponibles.</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Modal para vista ampliada de foto -->
+      <div id="photoModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="relative max-w-4xl max-h-[80vh] w-full rounded-lg overflow-hidden bg-white p-4">
+          <button id="closePhotoModal" class="absolute top-2 right-2 text-gray-700 hover:text-gray-900 text-3xl font-bold">&times;</button>
+          <img id="modalImage" src="" alt="" class="max-w-full max-h-[70vh] mx-auto" />
+          <p id="modalDescription" class="mt-2 text-center text-gray-800 text-sm"></p>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const photoModal = document.getElementById('photoModal');
+          const modalImage = document.getElementById('modalImage');
+          const modalDescription = document.getElementById('modalDescription');
+          const closePhotoModal = document.getElementById('closePhotoModal');
+          const photoItems = document.querySelectorAll('.relative.w-36.h-36');
+
+          photoItems.forEach(item => {
+            item.addEventListener('click', () => {
+              const img = item.querySelector('img');
+              modalImage.src = img.src;
+              modalImage.alt = img.alt;
+              modalDescription.textContent = item.querySelector('div') ? item.querySelector('div').textContent : '';
+              photoModal.classList.remove('hidden');
+              document.body.style.overflow = 'hidden'; // Disable background scroll
+            });
+            item.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                item.click();
+              }
+            });
+          });
+
+          closePhotoModal.addEventListener('click', () => {
+            photoModal.classList.add('hidden');
+            document.body.style.overflow = ''; // Enable background scroll
+          });
+
+          photoModal.addEventListener('click', (e) => {
+            if (e.target === photoModal) {
+              photoModal.classList.add('hidden');
+              document.body.style.overflow = ''; // Enable background scroll
+            }
+          });
+        });
+      </script>
+      <div class="mt-8 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Valor de servicios
+        </h2>
+        <div class="flex flex-wrap gap-3">
+          {% if precios %}
+            {% for price in precios %}
+              <span class="bg-[#fef3c7] text-[#fbbf24] px-3 py-1 rounded-full text-sm font-medium">
+                {{ price.description }}: ${{ price.formatted_price }}
+              </span>
+            {% endfor %}
+          {% else %}
+            <span class="text-gray-500">No hay precios definidos.</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="mt-8 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Información de contacto
+        </h2>
+        <div class="space-y-3 text-gray-700">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-phone-alt text-[#fbbf24]"></i>
+            {% if professional_profile.telefono %}
+            <a class="hover:underline text-[#fbbf24] font-semibold" href="tel:{{ professional_profile.telefono }}">
+              {{ professional_profile.telefono }}
+            </a>
+            {% else %}
+            <span class="text-gray-500">No disponible</span>
+            {% endif %}
+          </div>
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-envelope text-[#fbbf24]"></i>
+            <a class="hover:underline text-[#fbbf24] font-semibold" href="mailto:{{ professional_profile.user.email }}">
+              {{ professional_profile.user.email }}
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          Ubicación
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <p class="font-semibold text-gray-900">{{ professional_profile.ubicacion }}</p>
+            <a class="inline-flex items-center mt-2 text-[#fbbf24] hover:underline" href="https://maps.google.com/?q={{ professional_profile.ubicacion|urlencode }}" rel="noopener noreferrer" target="_blank">
+              <i class="fas fa-map-marked-alt mr-1"></i>Ver en Google Maps
+            </a>
+            <div id="map" style="height: 300px; width: 100%;"
+              data-lat="{{ professional_profile.latitud|stringformat:'f'|cut:',' }}"
+              data-lng="{{ professional_profile.longitud|stringformat:'f'|cut:',' }}"
+              data-location="{{ professional_profile.ubicacion|default:'' }}"
+              data-api-key="{{ google_maps_api_key|safe }}">
+            </div>
+            <script src="{% static 'js/google_maps.js' %}"></script>
+          </div>
+        </div>
+      <div class="mt-8 border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+       Horarios de atención
+      </p>
+      <table class="min-w-full text-gray-700 mt-2 border border-gray-200 rounded-lg bg-white text-base">
+        <thead>
+          <tr class="bg-gray-100 border-b border-gray-200">
+            <th class="text-left px-4 py-2 font-semibold">Día</th>
+            <th class="text-left px-4 py-2 font-semibold">Horario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if professional_profile.schedule %}
+            {% for day, hours in professional_profile.schedule.items %}
+              <tr class="border-b border-gray-200">
+                <td class="px-4 py-2 font-medium">{{ day }}</td>
+                <td class="px-4 py-2">
+                  {% if hours.closed %}
+                    <span class="text-red-600 font-semibold">Cerrado</span>
+                  {% else %}
+                    {{ hours.start }} - {{ hours.end }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="2" class="px-4 py-2 text-gray-500 italic">No hay horarios disponibles.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+     </div>
+
+<script>
+  // Manejo básico para cambiar la fecha con los botones
+  const selectedDateSpan = document.getElementById('selectedDate');
+  const prevDayBtn = document.getElementById('prevDay');
+  const nextDayBtn = document.getElementById('nextDay');
+
+  function formatDate(date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  let selectedDate = new Date("{{ selected_day|date:'Y-m-d' }}");
+
+  function updatePage() {
+    const dateStr = formatDate(selectedDate);
+    const url = new URL(window.location.href);
+    url.searchParams.set('day', dateStr);
+    window.location.href = url.toString();
+  }
+
+  prevDayBtn.addEventListener('click', () => {
+    selectedDate.setDate(selectedDate.getDate() - 1);
+    updatePage();
+  });
+
+  nextDayBtn.addEventListener('click', () => {
+    selectedDate.setDate(selectedDate.getDate() + 1);
+    updatePage();
+  });
+</script>
+
+<!-- Modal popup for client profile creation -->
+<div id="clientProfileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+    <h3 class="text-xl font-semibold mb-4">Para realizar citas se debe crear un perfil</h3>
+    <p class="mb-6">Debe crear un perfil de cliente para poder reservar una hora.</p>
+    <div class="flex justify-end space-x-4">
+      <button id="closeModalBtn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cerrar</button>
+      <a href="{% url 'ConectaGo:client_register' %}" id="continueBtn" class="px-4 py-2 bg-[#fbbf24] text-white rounded hover:bg-yellow-500">Continuar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const bookBtn = document.getElementById('bookAppointmentBtn');
+    const modal = document.getElementById('clientProfileModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    const hasClientProfile = {{ has_client_profile|yesno:"true,false" }};
+
+    bookBtn.addEventListener('click', function(event) {
+      if (!hasClientProfile) {
+        event.preventDefault();
+        modal.classList.remove('hidden');
+      }
+    });
+
+    closeModalBtn.addEventListener('click', function() {
+      modal.classList.add('hidden');
+    });
+  });
+</script>
+    </section>
+    <!-- Right column: Reviews and booking -->
+    <aside class="md:w-2/5 mt-10 md:mt-0">
+      <div class="bg-white rounded-lg shadow-md p-6 sticky top-20">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">
+          Opiniones de Clientes
+        </h2>
+        <!-- Filtros y orden de opiniones -->
+        <div class="mb-4">
+          <div class="flex flex-wrap gap-4 items-center border-b border-gray-200 pb-2 mb-2">
+            <button class="tab-opiniones font-semibold border-b-2 border-black text-black px-2 py-1 focus:outline-none" data-filter="all">Todas las opiniones <span class="text-gray-500">({{ total_reviews }})</span></button>
+            <button class="tab-opiniones text-gray-600 hover:text-black px-2 py-1 focus:outline-none" data-filter="positive">Positivas <span class="text-gray-500">({{ positive_reviews_count }})</span></button>
+            <button class="tab-opiniones text-gray-600 hover:text-black px-2 py-1 focus:outline-none" data-filter="neutral">Neutras <span class="text-gray-500">({{ neutral_reviews_count }})</span></button>
+            <button class="tab-opiniones text-gray-600 hover:text-black px-2 py-1 focus:outline-none" data-filter="negative">Negativas <span class="text-gray-500">({{ negative_reviews_count }})</span></button>
+          </div>
+          <div class="mb-2">
+            <span class="font-semibold">Ordenar opiniones por</span>
+            <div class="inline-flex gap-2 ml-2">
+              <button class="btn-orden bg-gray-100 border border-gray-300 rounded-full px-3 py-1 text-sm font-medium text-gray-800 focus:bg-[#fbbf24] focus:text-white" data-sort="recent">Más recientes</button>
+              <button class="btn-orden bg-gray-100 border border-gray-300 rounded-full px-3 py-1 text-sm font-medium text-gray-800 focus:bg-[#fbbf24] focus:text-white" data-sort="high">Puntuación más alta</button>
+              <button class="btn-orden bg-gray-100 border border-gray-300 rounded-full px-3 py-1 text-sm font-medium text-gray-800 focus:bg-[#fbbf24] focus:text-white" data-sort="low">Puntuación más baja</button>
+            </div>
+          </div>
+        </div>
+        <!-- Fin filtros y orden -->
+        <button id="addReviewBtn" class="mb-4 w-full bg-[#fbbf24] text-white py-2 rounded font-semibold hover:bg-yellow-500 transition">Añadir tu opinión</button>
+        <div class="space-y-6 max-h-[480px] pr-2 overflow-y-auto">
+          {% for review in reviews %}
+          <article id="review-{{ review.id }}" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3 mb-2">
+                <img alt="Foto de perfil de cliente" class="w-12 h-12 rounded-full object-cover" height="48" src="{{ review.client.foto_url|default:'https://via.placeholder.com/48' }}" width="48" />
+                <div>
+                  <p class="font-semibold text-gray-900">{{ review.nombre }}</p>
+                  <div class="flex items-center text-yellow-400 text-sm">
+                    {% for i in "12345" %}
+                      {% if review.rating|floatformat:0 >= i %}
+                        <i class="fas fa-star"></i>
+                      {% else %}
+                        <i class="far fa-star"></i>
+                      {% endif %}
+                    {% endfor %}
+                    <span class="ml-2 text-gray-600 font-normal">{{ review.fecha|timesince }} atrás</span>
+                  </div>
+                </div>
+              </div>
+      {% if user.is_superuser %}
+      <form method="post" action="{% url 'ConectaGo:delete_review' review.id %}" class="delete-review-form">
+        {% csrf_token %}
+        <button type="submit" class="text-red-600 hover:underline text-sm delete-review-btn">Eliminar</button>
+      </form>
+      {% endif %}
+
+      <!-- Confirmation Modal for Delete Review -->
+      <div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-2">
+          <h3 class="text-xl font-semibold mb-4 text-gray-900">Confirmar eliminación</h3>
+          <p class="mb-6 text-gray-700">¿Estás seguro que deseas eliminar este comentario?</p>
+          <div class="flex justify-end space-x-4">
+            <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
+            <button id="confirmDeleteBtn" class="px-4 py-2 bg-[#fbbf24] text-white rounded hover:bg-yellow-500">Eliminar</button>
+          </div>
+        </div>
+      </div>
+            </div>
+            <p class="text-gray-700 text-sm leading-relaxed review-opinion">{{ review.opinion }}</p>
+            {% if review.likes %}
+            <div class="mt-2 text-xs text-green-700">👍 {{ review.likes|join:", " }}</div>
+            {% endif %}
+            {% if review.improve %}
+            <div class="mt-1 text-xs text-red-700">⚠️ {{ review.improve|join:", " }}</div>
+            {% endif %}
+            <!-- Mostrar respuestas -->
+            {% if review.replies.all %}
+            <div class="mt-4 ml-8 border-l-2 border-gray-300 pl-4">
+              <h3 class="font-semibold text-gray-800 mb-2">Respuestas</h3>
+              {% for reply in review.replies.all %}
+              <div class="mb-2 p-2 bg-gray-100 rounded">
+                <p class="text-gray-700 text-sm">{{ reply.texto }}</p>
+                <p class="text-xs text-gray-500 mt-1">Respondido el {{ reply.fecha|date:"d/m/Y H:i" }}</p>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </article>
+          {% empty %}
+          <p class="text-gray-500">Aún no hay opiniones para este profesional.</p>
+          {% endfor %}
+        </div>
+        <button class="mt-6 w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">
+          Ver todas las opiniones
+        </button>
+      </div>
+      <!-- Modal para añadir opinión -->
+      <div id="addReviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-5xl relative mx-2">
+          <button id="closeReviewModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+          <form id="reviewForm" method="post">
+            {% csrf_token %}
+            <div class="flex flex-col md:flex-row gap-10">
+              <!-- Columna izquierda: datos y valoración -->
+              <div class="md:w-1/2 w-full flex flex-col gap-4 justify-center">
+                <h3 class="text-2xl font-bold mb-2 text-[#fbbf24]">¿Cómo fue tu experiencia?</h3>
+                <div class="flex items-center space-x-4 mb-2">
+                  <img src="{{ professional_profile.foto_url }}" alt="Foto profesional" class="w-16 h-16 md:w-20 md:h-20 max-w-full object-cover rounded border" />
+                  <div class="min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">{{ professional_profile.nombre }} {{ professional_profile.apellido }}</p>
+                    <p class="text-gray-500 text-sm truncate">{{ professional_profile.especialidad }}</p>
+                  </div>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Valoración</label>
+                  <div id="starRating" class="flex space-x-1 text-2xl text-yellow-400 cursor-pointer">
+                    <span data-value="1">&#9733;</span>
+                    <span data-value="2">&#9733;</span>
+                    <span data-value="3">&#9733;</span>
+                    <span data-value="4">&#9733;</span>
+                    <span data-value="5">&#9733;</span>
+                  </div>
+                  <input type="hidden" name="rating" id="ratingInput" value="0">
+                  <p class="text-xs text-gray-500 mt-1">De 1 a 5 estrellas, ¿cómo valorarías la experiencia?</p>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1"><i class=\"fas fa-thumbs-up text-yellow-400 mr-2\"></i>¿Qué es lo que más te gustó?</label>
+                  <div class="flex flex-wrap gap-2">
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Explicaciones detalladas" class="mr-1"><i class="fas fa-book-open mr-1 text-yellow-400"></i>Explicaciones detalladas</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Dedicación durante la visita" class="mr-1"><i class="fas fa-user-clock mr-1 text-yellow-400"></i>Dedicación durante la visita</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Eficacia del tratamiento" class="mr-1"><i class="fas fa-check-circle mr-1 text-yellow-400"></i>Eficacia al trabajar</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Puntualidad" class="mr-1"><i class="fas fa-clock mr-1 text-yellow-400"></i>Puntualidad</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Instalaciones excelentes" class="mr-1"><i class="fas fa-building mr-1 text-yellow-400"></i>Instalaciones excelentes</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Otro" class="mr-1"><i class="fas fa-ellipsis-h mr-1 text-yellow-400"></i>Otro</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1"><i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>¿Hay algo que se pueda mejorar?</label>
+                  <div class="flex flex-wrap gap-2">
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Falta de comunicación" class="mr-1"><i class="fas fa-comments mr-1"></i>Falta de comunicación</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Falta de empatía" class="mr-1"><i class="fas fa-handshake mr-1"></i>Falta de respeto</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="La cita fue demasiado corta" class="mr-1"><i class="fas fa-hourglass-half mr-1"></i>La cita fue demasiado corta</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="El tratamiento no me convenció" class="mr-1"><i class="fas fa-times-circle mr-1"></i>El trabajo no me convenció</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Retraso en la visita" class="mr-1"><i class="fas fa-clock mr-1"></i>Retraso en la visita</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Otro" class="mr-1"><i class="fas fa-ellipsis-h mr-1"></i>Otro</label>
+                  </div>
+                </div>
+              </div>
+              <!-- Columna derecha: opinión y datos -->
+              <div class="md:w-1/2 w-full flex flex-col justify-center gap-4">
+                <div>
+                  <label class="block font-semibold mb-1">Tu opinión</label>
+                  <textarea name="opinion" rows="5" class="w-full border rounded px-3 py-2 mb-2" placeholder="Escribe tu opinión aquí..." required></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Tu nombre</label>
+                  {% if client_nombre and client_apellido %}
+                    <input type="text" name="nombre" class="w-full border rounded px-3 py-2 mb-2 bg-gray-100" value="{{ client_nombre }} {{ client_apellido }}" readonly>
+                  {% else %}
+                    <input type="text" name="nombre" class="w-full border rounded px-3 py-2 mb-2" placeholder="Tu nombre o iniciales, por ejemplo: M.P.">
+                  {% endif %}
+                </div>
+                <div class="flex items-center mb-2">
+                  <input type="checkbox" name="consent" id="consent" class="mr-2">
+                  <label for="consent" class="text-xs">Consiento el tratamiento de mis datos personales con el fin de añadir una opinión sobre un especialista. <a href="#" class="underline">Saber más</a></label>
+                </div>
+                <input type="hidden" name="review_submit" value="1">
+                <button type="submit" class="w-full bg-[#b6892f] text-white py-2 rounded font-semibold hover:bg-[#a0761c] transition">Enviar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Modal open/close para añadir opinión
+        const addReviewBtn = document.getElementById('addReviewBtn');
+        const addReviewModal = document.getElementById('addReviewModal');
+        const closeReviewModal = document.getElementById('closeReviewModal');
+        if (addReviewBtn && addReviewModal && closeReviewModal) {
+          addReviewBtn.onclick = function() {
+            addReviewModal.classList.remove('hidden');
+          };
+          closeReviewModal.onclick = function() {
+            addReviewModal.classList.add('hidden');
+          };
+        }
+        // Star rating logic
+        const stars = document.querySelectorAll('#starRating span');
+        const ratingInput = document.getElementById('ratingInput');
+        stars.forEach(star => {
+          star.addEventListener('mouseenter', function() {
+            const val = parseInt(this.getAttribute('data-value'));
+            stars.forEach((s, i) => {
+              s.style.color = i < val ? '#fbbf24' : '#d1d5db';
+            });
+          });
+          star.addEventListener('mouseleave', function() {
+            const val = parseInt(ratingInput.value);
+            stars.forEach((s, i) => {
+              s.style.color = i < val ? '#fbbf24' : '#d1d5db';
+            });
+          });
+          star.addEventListener('click', function() {
+            const val = parseInt(this.getAttribute('data-value'));
+            ratingInput.value = val;
+            stars.forEach((s, i) => {
+              s.style.color = i < val ? '#fbbf24' : '#d1d5db';
+            });
+          });
+        });
+        // Filtrado y orden de opiniones (frontend)
+        const reviewContainer = document.querySelector('.space-y-6');
+        const allReviews = Array.from(reviewContainer.children);
+        const tabBtns = document.querySelectorAll('.tab-opiniones');
+        const sortBtns = document.querySelectorAll('.btn-orden');
+        let currentFilter = 'all';
+        let currentSort = 'recent';
+
+        function getReviewData(article) {
+          const stars = article.querySelectorAll('.fa-star:not(.far)');
+          const rating = stars.length;
+          return {
+            rating: rating || 0,
+            article: article
+          };
+        }
+
+        function filterReviews() {
+          let filtered = allReviews;
+          if (currentFilter === 'positive') {
+            filtered = allReviews.filter(a => getReviewData(a).rating >= 4);
+          } else if (currentFilter === 'neutral') {
+            filtered = allReviews.filter(a => getReviewData(a).rating === 3);
+          } else if (currentFilter === 'negative') {
+            filtered = allReviews.filter(a => getReviewData(a).rating <= 2);
+          }
+          if (filtered.length === 0) {
+            let backendCount = 0;
+            if (currentFilter === 'positive') backendCount = {{ positive_reviews_count }};
+            else if (currentFilter === 'neutral') backendCount = {{ neutral_reviews_count }};
+            else if (currentFilter === 'negative') backendCount = {{ negative_reviews_count }};
+            else backendCount = {{ total_reviews }};
+            if (backendCount > 0) {
+              reviewContainer.innerHTML = '<p class="text-gray-500">Hay opiniones en esta categoría, pero no se pueden mostrar por un error de sincronización. Por favor recarga la página.</p>';
+            }
+          }
+          return filtered;
+        }
+
+        function sortReviews(reviews) {
+          if (currentSort === 'recent') {
+            return reviews;
+          } else if (currentSort === 'high') {
+            return reviews.slice().sort((a, b) => getReviewData(b).rating - getReviewData(a).rating);
+          } else if (currentSort === 'low') {
+            return reviews.slice().sort((a, b) => getReviewData(a).rating - getReviewData(b).rating);
+          }
+          return reviews;
+        }
+
+        function renderReviews() {
+          reviewContainer.innerHTML = '';
+          let filtered = filterReviews();
+          let sorted = sortReviews(filtered);
+          if (sorted.length === 0) {
+            reviewContainer.innerHTML = '<p class="text-gray-500">Aún no hay opiniones para este profesional.</p>';
+          } else {
+            sorted.forEach(a => reviewContainer.appendChild(a));
+          }
+        }
+
+        tabBtns.forEach(btn => {
+          btn.addEventListener('click', function() {
+            tabBtns.forEach(b => b.classList.remove('font-semibold', 'border-b-2', 'border-black', 'text-black'));
+            this.classList.add('font-semibold', 'border-b-2', 'border-black', 'text-black');
+            currentFilter = this.getAttribute('data-filter');
+            renderReviews();
+          });
+        });
+        sortBtns.forEach(btn => {
+          btn.addEventListener('click', function() {
+            sortBtns.forEach(b => b.classList.remove('bg-[#fbbf24]', 'text-white'));
+            this.classList.add('bg-[#fbbf24]', 'text-white');
+            currentSort = this.getAttribute('data-sort');
+            renderReviews();
+          });
+        });
+
+        // Delete review confirmation modal logic
+        const deleteButtons = document.querySelectorAll('.delete-review-btn');
+        const confirmModal = document.getElementById('confirmDeleteModal');
+        const cancelBtn = document.getElementById('cancelDeleteBtn');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        let formToSubmit = null;
+
+        deleteButtons.forEach(button => {
+          button.addEventListener('click', function(event) {
+            event.preventDefault();
+            formToSubmit = this.closest('form');
+            confirmModal.classList.remove('hidden');
+          });
+        });
+
+        cancelBtn.addEventListener('click', function() {
+          formToSubmit = null;
+          confirmModal.classList.add('hidden');
+        });
+
+        confirmBtn.addEventListener('click', function() {
+          if (formToSubmit) {
+            formToSubmit.submit();
+          }
+        });
+
+        confirmModal.addEventListener('click', function(event) {
+          if (event.target === confirmModal) {
+            formToSubmit = null;
+            confirmModal.classList.add('hidden');
+          }
+        });
+      });
+      </script>
+    </aside>
+  </div>
+</main>
+
+<style>
+/* Limitar el largo del comentario de review para evitar overflow */
+.review-opinion {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  white-space: pre-line;
+}
+</style>
+{% endblock %}

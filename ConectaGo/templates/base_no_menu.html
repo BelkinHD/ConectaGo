@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}ConectaGO{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+{% block hero_section %}
+{% endblock %}
+
+<!-- CONTENIDO PRINCIPAL -->
+{% block content %}
+{% endblock %}
+
+<!-- FOOTER -->
+<footer>
+    <div class="max-w-screen-xl mx-auto px-4 text-center text-gray-600 text-sm py-8">
+        <p>© 2024 ConectaGO. Todos los derechos reservados.</p>
+        <p class="mt-2">
+            <a href="#" class="footer-link">Política de privacidad</a> | 
+            <a href="#" class="footer-link">Términos y condiciones</a> | 
+            <a href="#" class="footer-link">Contacto</a>
+        </p>
+    </div>
+</footer>
+
+</body>
+</html>

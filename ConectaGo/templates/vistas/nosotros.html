@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Nosotros - ConectaGO{% endblock %}
+
+{% block hero_section %}
+{# Ocultamos hero en esta página #}
+{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 py-12">
+  <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">ConectaGO: Haciendo más humano el mantenimiento domiciliario</h1>
+
+  <!-- Sección misión y visión -->
+  <div class="grid md:grid-cols-2 gap-8 mb-16">
+    <div class="bg-white rounded-2xl shadow p-6">
+      <h2 class="text-2xl font-semibold text-green-600 mb-4">Nuestra Misión</h2>
+      <p class="text-gray-700">Conectar a personas con profesionales confiables para solucionar necesidades del hogar, de manera rápida, segura y eficiente.</p>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-6">
+      <h2 class="text-2xl font-semibold text-blue-600 mb-4">Nuestra Visión</h2>
+      <p class="text-gray-700">Ser la plataforma líder en Latinoamérica en servicios domiciliarios, mejorando la calidad de vida de nuestros usuarios.</p>
+    </div>
+  </div>
+
+  <!-- Cifras e impacto -->
+  <div class="bg-gray-100 rounded-2xl p-8 mb-16">
+    <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Nuestro Impacto</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+      <div>
+        <p class="text-4xl font-bold text-blue-500">{{ clientes_satisfechos_str }}</p>
+        <p class="text-gray-600">Clientes satisfechos</p>
+      </div>
+      <div>
+        <p class="text-4xl font-bold text-green-500">{{ profesionales_activos_str }}</p>
+        <p class="text-gray-600">Profesionales activos</p>
+      </div>
+      <div>
+        <p class="text-4xl font-bold text-yellow-500">{{ indice_satisfaccion }}%</p>
+        <p class="text-gray-600">Índice de satisfacción</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equipo -->
+  <div>
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-10">Conoce al equipo</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+  <div class="bg-white rounded-2xl shadow p-4 text-center">
+    {% load static %}
+    {% if admin_profile and admin_profile.foto_url %}
+      <img src="{{ admin_profile.foto_url }}" alt="Administrador" class="w-32 h-32 mx-auto rounded-full mb-4">
+    {% else %}
+      <img src="{% static 'img/default_admin.png' %}" alt="Administrador" class="w-32 h-32 mx-auto rounded-full mb-4">
+    {% endif %}
+    {% if admin_user %}
+      <h3 class="text-lg font-semibold text-gray-800">{{ admin_user.first_name }} {{ admin_user.last_name }}</h3>
+      <p class="text-sm text-gray-500">Administrador</p>
+    {% else %}
+      <h3 class="text-lg font-semibold text-gray-800">Administrador</h3>
+      <p class="text-sm text-gray-500">Administrador</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

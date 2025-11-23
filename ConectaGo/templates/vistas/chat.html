@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block hero_section %}
+<style>
+    :root {
+        --color-bg: #ffffff;
+        --color-border: #e0e0e0;
+        --color-text-primary: #222222;
+        --color-text-secondary: #666666;
+        --color-accent: #4caf50;
+        --color-accent-hover: #388e3c;
+        --font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .chat-container {
+        display: flex;
+        height: 80vh;
+        margin: 20px;
+        font-family: var(--font-family);
+        background-color: var(--color-bg);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+        position: relative;
+        top: 60px; /* Ajusta este valor para bajar la sección y mostrar la navbar */
+    }
+
+    .chat-list {
+        width: 28%;
+        border-right: 1px solid var(--color-border);
+        overflow-y: auto;
+        padding: 15px 10px;
+        background-color: #fafafa;
+    }
+
+    .chat-list h2 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: var(--color-text-primary);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 8px;
+    }
+
+    .chat-item {
+        padding: 12px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--color-text-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.3s ease;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .chat-item:hover, .chat-item.active {
+        background-color: var(--color-accent);
+        color: white;
+    }
+
+    .chat-item a {
+        color: inherit;
+        text-decoration: none;
+        flex-grow: 1;
+    }
+
+    .chat-item a:hover {
+        text-decoration: underline;
+    }
+
+    .chat-item span.delete-chat {
+        color: #e57373;
+        font-weight: bold;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .chat-item span.delete-chat:hover {
+        color: #d32f2f;
+    }
+
+    .chat-window {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 25px;
+        /* position: relative; Remove absolute positioning context */
+        background-color: var(--color-bg);
+    }
+
+    .chat-header {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--color-text-primary);
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 12px;
+        margin-bottom: 15px;
+    }
+
+    .messages {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border) transparent;
+        scroll-behavior: smooth;
+        margin-bottom: 15px; /* Add margin to avoid overlap with input */
+    }
+
+    .messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+        background-color: var(--color-border);
+        border-radius: 3px;
+    }
+    .message {
+        max-width: 65%;
+        padding: 12px 18px;
+        border-radius: 12px;
+        position: relative;
+        word-wrap: break-word;
+        font-size: 14px;
+        line-height: 1.5;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: background-color 0.3s ease;
+        word-break: break-word;
+    }
+
+    .message .sender {
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--color-accent);
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.05em;
+    }
+
+    .message .timestamp {
+        font-size: 10px;
+        color: var(--color-text-secondary);
+        margin-top: 6px;
+        text-align: right;
+    }
+
+    .message.sent {
+        background-color: #e6f4ea;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+        border-bottom-left-radius: 12px;
+    }
+
+    .message.sent:hover {
+        background-color: #d0e8ce;
+    }
+
+    .message.received {
+        background-color: #f9f9f9;
+        border: 1px solid var(--color-border);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 12px;
+    }
+
+    .message.received:hover {
+        background-color: #f0f0f0;
+    }
+
+    .no-chats {
+        padding: 30px;
+        text-align: center;
+        color: var(--color-text-secondary);
+        font-size: 1rem;
+        font-style: italic;
+    }
+
+    .chat-input-form {
+        /* Remove absolute positioning */
+        /* position: absolute;
+        bottom: 15px;
+        left: 25px;
+        right: 25px; */
+        display: flex;
+        gap: 12px;
+        background: #f5f5f5;
+        padding: 12px 18px;
+        border-radius: 30px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .chat-input-form:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .chat-input-form input[type="text"] {
+        flex: 1;
+        padding: 12px 20px;
+        border-radius: 25px;
+        border: 1px solid var(--color-border);
+        font-size: 15px;
+        font-family: var(--font-family);
+        transition: border-color 0.3s ease;
+    }
+
+    .chat-input-form input[type="text"]:focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 5px var(--color-accent);
+    }
+
+    .chat-input-form button {
+        background-color: var(--color-accent);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .chat-input-form button:hover {
+        background-color: var(--color-accent-hover);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+</style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messagesContainer = document.getElementById('messages');
+            if (messagesContainer) {
+                // Scroll to bottom smoothly on page load
+                messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+            }
+
+            // Scroll to bottom on new message submit
+            const form = document.getElementById('sendMessageForm');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    setTimeout(() => {
+                        messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+                    }, 100);
+                });
+            }
+        });
+    </script>
+
+<div class="chat-container">
+    <div class="chat-list">
+        <h2>Chats</h2>
+        {% if chatrooms %}
+            {% for chatroom in chatrooms %}
+                <div class="chat-item {% if selected_chatroom and chatroom.id == selected_chatroom.id %}active{% endif %}" data-chat-id="{{ chatroom.id }}" style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                    {% with other_participants=chatroom.participants.exclude id=request.user.id %}
+                        {% with other_user=other_participants.first %}
+                            <span style="flex-grow: 1;">
+                                <a href="{% url 'ConectaGo:chat' %}?chat_id={{ chatroom.id }}" style="text-decoration: none; color: inherit;">
+                                    {{ other_user.username }}
+                                </a>
+                            </span>
+                            <span style="position: absolute; right: 10px;">
+                                <a href="{% url 'ConectaGo:delete_chatroom' chatroom.id %}" onclick="return confirm('¿Está seguro de que desea eliminar este chat?');" style="color: red; font-weight: bold; text-decoration: none;">&times;</a>
+                            </span>
+                        {% endwith %}
+                    {% endwith %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-chats">No hay chats disponibles.</div>
+        {% endif %}
+    </div>
+    <div class="chat-window">
+        {% if selected_chatroom %}
+            <div class="chat-header" style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+                {{ other_participant_email }}
+            </div>
+            <div class="messages" id="messages">
+                {% for message in messages %}
+                    <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                        <div class="sender">{{ message.sender.username }}</div>
+                        <div class="content">{{ message.content }}</div>
+                        <div class="timestamp">{{ message.timestamp|date:"j \\d\\e F \\d\\e Y \\a \\l\\a\\s H:i" }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+            <form id="sendMessageForm" method="post" action="{% url 'ConectaGo:send_message' %}" class="chat-input-form">
+                {% csrf_token %}
+                <input type="hidden" name="chatroom_id" value="{{ selected_chatroom.id }}">
+                <input type="text" name="message" id="messageInput" placeholder="Escribe un mensaje..." autocomplete="off" required>
+                <button type="submit">Enviar</button>
+            </form>
+        {% else %}
+            <div class="no-chats">Seleccione un chat para comenzar a conversar.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block hero_section %}
+<!-- Desactivado en esta vista -->
+{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-16">
+  <section class="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">
+      Visualización de Horario de {{ professional_profile.nombre }} {{ professional_profile.apellido }}
+    </h1>
+
+    <div class="mb-4 text-center">
+      <button id="prevDay" class="px-3 py-1 border rounded-l hover:bg-gray-200"><</button>
+      <span id="selectedDate" class="px-4 py-1 border-t border-b cursor-pointer">{{ selected_day|date:"l, d \\d\\e F" }}</span>
+      <button id="nextDay" class="px-3 py-1 border rounded-r hover:bg-gray-200">></button>
+    </div>
+
+    <div id="daySelector" class="flex justify-center space-x-4 mb-6 overflow-x-auto">
+      {% comment %} Aquí se puede implementar el selector de días si se desea {% endcomment %}
+    </div>
+
+    <div class="mb-6">
+      <h2 class="text-2xl font-semibold mb-4">Servicios disponibles</h2>
+      <div id="servicesContainer" class="flex flex-wrap gap-4">
+        {% for service in services %}
+          <div class="service-item border border-gray-400 rounded p-3 cursor-pointer" data-service-id="{{ service.id }}" data-service-description="{{ service.description }}" data-service-price="{{ service.formatted_price }}">
+            <p class="font-semibold">{{ service.description }}: ${{ service.formatted_price }}</p>
+          </div>
+        {% empty %}
+          <p>No hay servicios disponibles.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="scheduleContainer">
+      {% with day_name=selected_day|date:"l" %}
+      {% with day_name_es=day_name|yesno:"Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo" %}
+      {% if day_schedule.closed %}
+        <p class="text-red-600 font-semibold">No disponible ese día</p>
+      {% else %}
+        <h2 class="text-xl font-semibold mb-2">Mañana</h2>
+        <div class="flex flex-wrap gap-2 mb-6">
+          {% for hour in morning_hours %}
+            {% if hour in morning_available %}
+              <button class="hour-button border border-gray-500 rounded px-3 py-1 bg-green-200 cursor-pointer" data-hour="{{ hour }}">{{ hour }}</button>
+            {% else %}
+              <button class="border border-gray-300 rounded px-3 py-1 text-gray-400 cursor-not-allowed" disabled>{{ hour }}</button>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <h2 class="text-xl font-semibold mb-2">Tarde</h2>
+        <div class="flex flex-wrap gap-2 mb-6">
+          {% for hour in afternoon_hours %}
+            {% if hour in afternoon_available %}
+              <button class="hour-button border border-gray-500 rounded px-3 py-1 bg-green-200 cursor-pointer" data-hour="{{ hour }}">{{ hour }}</button>
+            {% else %}
+              <button class="border border-gray-300 rounded px-3 py-1 text-gray-400 cursor-not-allowed" disabled>{{ hour }}</button>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <h2 class="text-xl font-semibold mb-2">Noche</h2>
+        <div class="flex flex-wrap gap-2">
+          {% for hour in night_hours %}
+            {% if hour in night_available %}
+              <button class="hour-button border border-gray-500 rounded px-3 py-1 bg-green-200 cursor-pointer" data-hour="{{ hour }}">{{ hour }}</button>
+            {% else %}
+              <button class="border border-gray-300 rounded px-3 py-1 text-gray-400 cursor-not-allowed" disabled>{{ hour }}</button>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% endwith %}
+      {% endwith %}
+    </div>
+
+    <div class="mt-6">
+      <a href="{% url 'ConectaGo:public_professional_profile' professional_profile.user.username %}" class="text-[#fbbf24] hover:underline">Volver al perfil público</a>
+    </div>
+  </section>
+</main>
+
+<script>
+  // Manejo básico para cambiar la fecha con los botones
+  const selectedDateSpan = document.getElementById('selectedDate');
+  const prevDayBtn = document.getElementById('prevDay');
+  const nextDayBtn = document.getElementById('nextDay');
+
+  function formatDate(date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  let selectedDate = new Date("{{ selected_day|date:'Y-m-d' }}");
+
+  function updatePage() {
+    const dateStr = formatDate(selectedDate);
+    const url = new URL(window.location.href);
+    url.searchParams.set('day', dateStr);
+    window.location.href = url.toString();
+  }
+
+  prevDayBtn.addEventListener('click', () => {
+    selectedDate.setDate(selectedDate.getDate() - 1);
+    updatePage();
+  });
+
+  nextDayBtn.addEventListener('click', () => {
+    selectedDate.setDate(selectedDate.getDate() + 1);
+    updatePage();
+  });
+
+  // Variables para almacenar selección
+  let selectedServiceId = null;
+  let selectedServiceDescription = null;
+  let selectedServicePrice = null;
+  let selectedHour = null;
+
+  // Manejar selección de servicio
+  const serviceItems = document.querySelectorAll('.service-item');
+  serviceItems.forEach(item => {
+    item.addEventListener('click', () => {
+      // Deseleccionar todos
+      serviceItems.forEach(i => i.classList.remove('bg-yellow-300'));
+      // Seleccionar el clickeado
+      item.classList.add('bg-yellow-300');
+      selectedServiceId = item.getAttribute('data-service-id');
+      selectedServiceDescription = item.getAttribute('data-service-description');
+      selectedServicePrice = item.getAttribute('data-service-price');
+      checkReadyToSchedule();
+    });
+  });
+
+  // Manejar selección de hora
+  const hourButtons = document.querySelectorAll('.hour-button');
+  hourButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Deseleccionar todos
+      hourButtons.forEach(b => b.classList.remove('bg-yellow-300'));
+      // Seleccionar el clickeado
+      button.classList.add('bg-yellow-300');
+      selectedHour = button.getAttribute('data-hour');
+      checkReadyToSchedule();
+    });
+  });
+
+  function checkReadyToSchedule() {
+    if (selectedServiceId && selectedHour) {
+      // Redirect to validar_cita view instead of confirmation dialog
+      const params = new URLSearchParams({
+        service_id: selectedServiceId,
+        date: "{{ selected_day|date:'Y-m-d' }}",
+        time: selectedHour,
+        username: "{{ professional_profile.user.username }}"
+      });
+      window.location.href = "{% url 'ConectaGo:validar_cita' %}?" + params.toString();
+    }
+  }
+
+  function scheduleAppointment() {
+    // Aquí se debe llamar a la API de Calendly para crear la agenda
+    // Ejemplo básico usando fetch para llamar a un endpoint backend que maneje la integración con Calendly
+
+    fetch("{% url 'ConectaGo:schedule_appointment' professional_profile.user.username %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        service_id: selectedServiceId,
+        date: "{{ selected_day|date:'Y-m-d' }}",
+        time: selectedHour
+      })
+    })
+    .then(response => {
+      if (response.ok) {
+        alert('Cita agendada correctamente.');
+        // Opcional: recargar la página o redirigir
+        window.location.reload();
+      } else {
+        response.json().then(data => {
+          alert('Error al agendar la cita: ' + (data.error || 'Error desconocido'));
+        }).catch(() => {
+          alert('Error al agendar la cita.');
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error al agendar la cita.');
+    });
+  }
+</script>
+{% endblock %}

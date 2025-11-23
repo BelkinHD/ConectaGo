@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block hero_section %}
+{% endblock %}
+
+{% block content %}
+<main class="max-w-5xl mx-auto p-6 bg-white rounded shadow mt-10">
+  <h1 class="text-2xl font-bold mb-6">Reportes de Opiniones</h1>
+
+  {% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+      <div class="p-3 mb-2 rounded {{ message.tags }} bg-green-100 text-green-800">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if reports %}
+  <div class="space-y-6">
+    {% for report in reports %}
+    <div class="border border-gray-300 rounded-lg p-4 shadow-sm bg-gray-50">
+      <div class="flex items-center space-x-4 mb-3">
+        {% if report.reporter.foto %}
+        <img src="{{ report.reporter.foto.url }}" alt="Foto de {{ report.reporter.nombre }}" class="w-12 h-12 rounded-full object-cover" />
+        {% else %}
+        <img src="https://via.placeholder.com/48" alt="Foto de {{ report.reporter.nombre }}" class="w-12 h-12 rounded-full object-cover" />
+        {% endif %}
+        <div>
+          <p class="font-semibold text-gray-900">{{ report.reporter.nombre }} {{ report.reporter.apellido }}</p>
+          <p class="text-gray-600 text-sm mb-1"><strong>Justificación:</strong> {{ report.justification|truncatechars:150 }}</p>
+          <p class="text-gray-600 text-sm mb-1"><strong>Estado:</strong> {{ report.get_status_display }}</p>
+          <p class="text-gray-600 text-sm mb-4"><strong>Fecha:</strong> {{ report.created_at|date:"d/m/Y H:i" }}</p>
+          <div class="flex items-center text-yellow-400 text-sm">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 mb-2">
+        {% if report.review.client and report.review.client.foto %}
+        <img src="{{ report.review.client.foto.url }}" alt="Foto de {{ report.review.client.nombre }}" class="w-10 h-10 rounded-full object-cover" />
+        {% else %}
+        <img src="https://via.placeholder.com/40" alt="Foto de {{ report.review.client.nombre }}" class="w-10 h-10 rounded-full object-cover" />
+        {% endif %}
+        <p class="text-gray-900 font-semibold">{{ report.review.nombre }}</p>
+      </div>
+
+      <p class="text-gray-700 mb-2">{{ report.review.opinion|truncatechars:150 }}</p>
+
+      <a href="{% url 'ConectaGo:public_professional_profile' report.review.professional.user.username %}#review-{{ report.review.id }}" class="inline-block bg-[#fbbf24] text-white px-4 py-2 rounded hover:bg-yellow-500 transition">Ver Opinión</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>No hay reportes pendientes.</p>
+  {% endif %}
+</main>
+{% endblock %}

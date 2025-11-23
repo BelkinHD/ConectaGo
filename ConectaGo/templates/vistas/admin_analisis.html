@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block hero_section %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-4">Datos Generales</h2>
+
+  <form method="get" class="mb-6 space-y-4" id="filterForm">
+    <div>
+      <label for="ubicacion" class="block font-medium mb-1">Filtrar por Ubicación:</label>
+      <select name="ubicacion" id="ubicacion" class="border rounded px-3 py-2 w-full max-w-xs">
+        <option value="">Todas las ubicaciones</option>
+        {% for ubic in ubicaciones %}
+          <option value="{{ ubic }}" {% if ubic == ubicacion_filter %}selected{% endif %}>{{ ubic }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="especialidad" class="block font-medium mb-1">Filtrar por Especialidad:</label>
+      <select name="especialidad" id="especialidad" class="border rounded px-3 py-2 w-full max-w-xs">
+        <option value="">Todas las especialidades</option>
+        {% for esp in especialidades %}
+          <option value="{{ esp }}" {% if esp == especialidad_filter %}selected{% endif %}>{{ esp }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="flex space-x-4">
+      <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Filtrar Datos</button>
+
+      <button type="button" id="downloadPdfBtn" class="flex items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <img src="{% static 'images/pdf_icon.png' %}" alt="Descargar PDF" class="w-5 h-5 mr-2" />
+        Descargar en PDF
+      </button>
+    </div>
+  </form>
+
+  <h3 class="text-lg font-semibold mb-2">Resultados</h3>
+  <table class="min-w-full border border-gray-300 rounded">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="border border-gray-300 px-4 py-2 text-left">Ubicación</th>
+        <th class="border border-gray-300 px-4 py-2 text-left">Especialidad</th>
+        <th class="border border-gray-300 px-4 py-2 text-right">Cantidad de Agendamientos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for prof in profesionales %}
+      <tr class="hover:bg-gray-50">
+        <td class="border border-gray-300 px-4 py-2">{{ prof.ubicacion }}</td>
+        <td class="border border-gray-300 px-4 py-2">{% if prof.especialidad %}{{ prof.especialidad }}{% else %}*Sin especialidad*{% endif %}</td>
+        <td class="border border-gray-300 px-4 py-2 text-right">{{ prof.cantidad_agendamientos }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="border border-gray-300 px-4 py-2 text-center">No se encontraron resultados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+    const ubicacion = document.getElementById('ubicacion').value;
+    const especialidad = document.getElementById('especialidad').value;
+    const params = new URLSearchParams();
+    if (ubicacion) params.append('ubicacion', ubicacion);
+    if (especialidad) params.append('especialidad', especialidad);
+    const url = "{% url 'ConectaGo:admin_analisis_pdf' %}?" + params.toString();
+    window.open(url, '_blank');
+  });
+</script>
+{% endblock %}

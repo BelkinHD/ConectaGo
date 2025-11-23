@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+{# Ocultar la sección hero para la vista cliente_citas #}
+{% endblock %}
+
+{% block content %}
+<div class="mis-citas-container">
+    <h1 class="mis-citas-title">Mis Citas</h1>
+
+    {% if appointments %}
+    <table class="mis-citas-table">
+        <thead>
+            <tr>
+                <th>Profesional</th>
+                <th>Servicio</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr>
+                <td>{{ appointment.professional.nombre }} {{ appointment.professional.apellido }}</td>
+                <td>{{ appointment.service.description }}</td>
+                <td>{{ appointment.date }}</td>
+                <td>{{ appointment.time }}</td>
+                <td style="color: {{ appointment.status_color }};">{{ appointment.display_status }}</td>
+                <td class="mis-citas-actions" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    <form method="post" action="{% url 'ConectaGo:cancel_appointment' appointment.id %}" class="inline" onsubmit="return confirmCancel(event, {{ appointment.id }})" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="cancel_reason" id="cancel_reason_{{ appointment.id }}" value="">
+                        <button type="submit" class="cancel-btn" style="margin: 0;">Cancelar</button>
+                    </form>
+                    <a href="{% url 'ConectaGo:metodo_de_pago' appointment.id %}" class="pay-btn" style="margin: 0;">Pago</a>
+                    <button onclick="showRescheduleModal({{ appointment.id }})" class="reschedule-btn" style="margin: 0;">Reagendar</button>
+                    <a href="{% url 'ConectaGo:chat' %}?username={{ appointment.professional.user.username }}" class="message-btn" style="margin: 0;">Mandar Mensaje</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-gray-600">No tienes citas agendadas.</p>
+    {% endif %}
+</div>
+
+<!-- Cancel Reason Modal -->
+<div id="cancelModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 class="modal-header">Confirmar Cancelación</h2>
+        <p>¿Estás seguro que deseas cancelar esta cita?</p>
+        <textarea id="cancelReasonText" placeholder="Motivo de la cancelación" class="modal-textarea" rows="3"></textarea>
+        <div class="modal-buttons">
+            <button onclick="hideCancelModal()" class="modal-button-cancel">Cancelar</button>
+            <button onclick="confirmCancelSubmit()" class="modal-button-confirm cancel">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div id="rescheduleModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 class="modal-header">Reagendar Cita</h2>
+        <p>Por favor, ingresa el motivo para reagendar la cita:</p>
+        <textarea id="rescheduleReasonText" placeholder="Motivo para reagendar" class="modal-textarea" rows="3"></textarea>
+        <div class="modal-buttons">
+            <button onclick="hideRescheduleModal()" class="modal-button-cancel">Cancelar</button>
+            <button onclick="confirmRescheduleSubmit()" class="modal-button-confirm reschedule">Enviar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCancelForm = null;
+let currentCancelAppointmentId = null;
+
+function confirmCancel(event, appointmentId) {
+    event.preventDefault();
+    currentCancelForm = event.target;
+    currentCancelAppointmentId = appointmentId;
+    document.getElementById('cancelModal').classList.remove('hidden');
+    return false;
+}
+
+function hideCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+    currentCancelForm = null;
+    currentCancelAppointmentId = null;
+}
+
+function confirmCancelSubmit() {
+    const reason = document.getElementById('cancelReasonText').value.trim();
+    if (!reason) {
+        alert('Por favor ingresa el motivo de la cancelación.');
+        return;
+    }
+    document.getElementById('cancel_reason_' + currentCancelAppointmentId).value = reason;
+    currentCancelForm.submit();
+    hideCancelModal();
+}
+
+let currentRescheduleAppointmentId = null;
+
+function showRescheduleModal(appointmentId) {
+    currentRescheduleAppointmentId = appointmentId;
+    document.getElementById('rescheduleModal').classList.remove('hidden');
+}
+
+function hideRescheduleModal() {
+    document.getElementById('rescheduleModal').classList.add('hidden');
+    currentRescheduleAppointmentId = null;
+}
+
+function confirmRescheduleSubmit() {
+    const reason = document.getElementById('rescheduleReasonText').value.trim();
+    if (!reason) {
+        alert('Por favor ingresa el motivo para reagendar.');
+        return;
+    }
+    // Submit the reschedule reason to backend via POST form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/reschedule_appointment/' + currentRescheduleAppointmentId + '/';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    // Add reschedule reason input
+    const reasonInput = document.createElement('input');
+    reasonInput.type = 'hidden';
+    reasonInput.name = 'reschedule_reason';
+    reasonInput.value = reason;
+    form.appendChild(reasonInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

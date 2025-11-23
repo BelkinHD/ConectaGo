@@ -1,0 +1,955 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load dict_extras %}
+
+{% block hero_section %}
+{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-16">
+   <div class="flex flex-col md:flex-row md:space-x-10">
+    <!-- Left column: Doctor info -->
+    <section class="md:w-3/5 bg-white rounded-lg shadow-md p-6">
+     {% if messages %}
+      <div class="mb-4">
+        {% for message in messages %}
+          <div class="p-4 mb-2 rounded {{ message.tags }} bg-green-100 text-green-800">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+     {% endif %}
+     <div class="flex flex-col md:flex-row md:space-x-6">
+      {% if user.is_authenticated and user.username == professional_profile.user.username %}
+      <div class="relative" style="width:160px; height:160px; cursor:pointer;" id="photoContainer" tabindex="0" aria-label="Cambiar foto de perfil">
+        {% if professional_profile and professional_profile.foto %}
+          <div class="relative group inline-block">
+            <img id="profilePhoto" src="{{ professional_profile.foto.url }}" alt="Foto de perfil" class="w-40 h-40 rounded-lg object-cover mx-auto md:mx-0" />
+            {% if professional_profile.certification_status == 'accepted' %}
+              <div class="relative group inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-label="Certificado">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <div class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10 hidden group-hover:block">
+                  Este usuario está certificado
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          <img id="profilePhoto" src="{% static 'img/profile.png' %}" alt="Foto de perfil por defecto" class="w-40 h-40 rounded-lg object-cover mx-auto md:mx-0" />
+        {% endif %}
+        <div class="absolute inset-0 bg-black bg-opacity-30 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity text-white font-semibold">
+          Cambiar foto
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Modal for changing photo -->
+      <div id="changePhotoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-100" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+        <div class="bg-white rounded-lg p-6 w-96 max-w-full relative">
+          <h2 id="modalTitle" class="text-xl font-semibold mb-4">Cambiar foto de perfil</h2>
+          <p id="modalDesc" class="mb-4">Seleccione una nueva imagen para su foto de perfil.</p>
+          <form id="profilePhotoUploadForm" method="post" action="{% url 'ConectaGo:mi_perfil_profesional' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-4">
+              <input type="file" id="photoInput" name="foto" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[#fbbf24] file:text-white hover:file:bg-yellow-500 cursor-pointer" />
+            </div>
+            <div class="mb-4">
+              <img id="photoPreview" src="#" alt="Vista previa de la imagen seleccionada" class="hidden w-40 h-40 rounded-lg object-cover mx-auto" />
+            </div>
+            <div class="flex justify-end space-x-4">
+              <button type="button" id="cancelButton" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>
+              <button type="submit" class="px-4 py-2 rounded bg-[#fbbf24] text-white hover:bg-yellow-500">Guardar</button>
+            </div>
+          </form>
+          <button id="closeModalButton" aria-label="Cerrar ventana" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-2xl font-bold">&times;</button>
+        </div>
+      </div>
+
+      <div class="mt-4 md:mt-0 flex flex-col justify-between flex-1">
+       <div>
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+         {{ professional_profile.nombre }} {{ professional_profile.apellido }}
+         {% if professional_profile.certification_status == 'accepted' %}
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-label="Certificado">
+             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+           </svg>
+         {% endif %}
+        </h1>
+        <p class="text-[#fbbf24] font-semibold mt-1 text-lg">
+         {{ professional_profile.especialidad }}
+        </p>
+        <div class="flex items-center space-x-2 mt-2">
+         <i class="fas fa-map-marker-alt text-[#fbbf24]">
+         </i>
+         <span class="text-gray-600 text-sm">
+          {{ professional_profile.ubicacion }}
+         </span>
+        </div>
+        <div class="flex items-center space-x-2 mt-2">
+         <i class="fas fa-star text-yellow-400">
+         </i>
+         <span class="text-yellow-400 font-semibold">
+          4.8
+         </span>
+         <span class="text-gray-600 text-sm">
+          (120 opiniones)
+         </span>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="mt-8 border-t border-gray-200 pt-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">
+       Sobre {{ professional_profile.nombre }} {{ professional_profile.apellido }}
+      </h2>
+      <form method="post" class="mb-4" id="descripcion-form">
+        {% csrf_token %}
+        <textarea id="descripcion-textarea" name="descripcion" rows="6" class="w-full border border-gray-300 rounded p-2">{{ professional_profile.descripcion }}</textarea>
+
+    
+
+        <button id="guardar-btn" type="submit" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 disabled:opacity-50" disabled>Guardar</button>
+      </form>
+
+      <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|safe }}&libraries=places"></script>
+      <script>
+        function initAutocomplete() {
+          const input = document.getElementById('id_ubicacion_ubicacion');
+          const latInput = document.getElementById('id_latitud');
+          const lngInput = document.getElementById('id_longitud');
+          const guardarUbicacionBtn = document.getElementById('guardar-ubicacion-btn');
+          if (!input) return;
+
+          const autocomplete = new google.maps.places.Autocomplete(input, {
+            types: ['address'],
+            componentRestrictions: { country: 'cl' }
+          });
+
+          autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (!place.formatted_address) {
+              return;
+            }
+            input.value = place.formatted_address;
+            if (place.geometry) {
+              latInput.value = place.geometry.location.lat();
+              lngInput.value = place.geometry.location.lng();
+            }
+            if (guardarUbicacionBtn) {
+              guardarUbicacionBtn.disabled = false;
+            }
+          });
+
+          // Geocode function to get lat/lng from address string
+          function geocodeAddress(address, callback) {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: address }, function(results, status) {
+              if (status === 'OK' && results[0]) {
+                const location = results[0].geometry.location;
+                callback(location.lat(), location.lng());
+              } else {
+                callback(null, null);
+              }
+            });
+          }
+
+          // On page load, if lat/lng are empty but location has value, geocode to fill lat/lng
+          if (input.value && (!latInput.value || !lngInput.value)) {
+            geocodeAddress(input.value, function(lat, lng) {
+              if (lat !== null && lng !== null) {
+                latInput.value = lat;
+                lngInput.value = lng;
+              }
+            });
+          }
+
+          if (guardarUbicacionBtn) {
+            const initialUbicacionValue = input.value;
+            input.addEventListener('input', () => {
+              if (input.value.trim() !== initialUbicacionValue.trim()) {
+                guardarUbicacionBtn.disabled = false;
+                // Clear lat/lng when user manually edits location
+                latInput.value = '';
+                lngInput.value = '';
+              } else {
+                guardarUbicacionBtn.disabled = true;
+              }
+            });
+          }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+          if (typeof google !== 'undefined' && google.maps) {
+            initAutocomplete();
+          } else {
+            const script = document.createElement('script');
+            script.src = "https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|safe }}&libraries=places&callback=initAutocomplete";
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+          }
+        });
+
+        const textarea = document.getElementById('descripcion-textarea');
+        const guardarBtn = document.getElementById('guardar-btn');
+        const initialValue = textarea.value;
+
+        textarea.addEventListener('input', () => {
+          if (textarea.value.trim() !== initialValue.trim()) {
+            guardarBtn.disabled = false;
+          } else {
+            guardarBtn.disabled = true;
+          }
+        });
+
+        const ubicacionInput = document.getElementById('id_ubicacion_ubicacion');
+        const guardarUbicacionBtn = document.getElementById('guardar-ubicacion-btn');
+        if (ubicacionInput && guardarUbicacionBtn) {
+          const initialUbicacionValue = ubicacionInput.value;
+
+          ubicacionInput.addEventListener('input', () => {
+            if (ubicacionInput.value.trim() !== initialUbicacionValue.trim()) {
+              guardarUbicacionBtn.disabled = false;
+            } else {
+              guardarUbicacionBtn.disabled = true;
+            }
+          });
+        }
+
+        // Modal open/close and preview logic
+        const photoContainer = document.getElementById('photoContainer');
+        const changePhotoModal = document.getElementById('changePhotoModal');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const cancelButton = document.getElementById('cancelButton');
+        const photoInput = document.getElementById('photoInput');
+        const photoPreview = document.getElementById('photoPreview');
+
+        function openModal() {
+          changePhotoModal.classList.remove('hidden');
+          photoInput.value = '';
+          photoPreview.src = '#';
+          photoPreview.classList.add('hidden');
+          photoInput.focus();
+          // Hide client opinions container when photo modal is open
+          const clientOpinions = document.querySelector('aside.md\\:w-2\\/5');
+          if (clientOpinions) {
+            clientOpinions.style.display = 'none';
+          }
+        }
+
+        function closeModal() {
+          changePhotoModal.classList.add('hidden');
+          // Show client opinions container when photo modal is closed
+          const clientOpinions = document.querySelector('aside.md\\:w-2\\/5');
+          if (clientOpinions) {
+            clientOpinions.style.display = '';
+          }
+        }
+
+        photoContainer.addEventListener('click', openModal);
+        photoContainer.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openModal();
+          }
+        });
+
+        closeModalButton.addEventListener('click', closeModal);
+        cancelButton.addEventListener('click', closeModal);
+
+        photoInput.addEventListener('change', function(event) {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              photoPreview.src = e.target.result;
+              photoPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+          } else {
+            photoPreview.src = '#';
+            photoPreview.classList.add('hidden');
+          }
+        });
+      </script>
+     </div>
+     <!-- New section for prices -->
+     <div class="mt-8 border-t border-gray-200 pt-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">
+       Valor de la cita
+      </h2>
+      <form method="post" id="pricesForm">
+        {% csrf_token %}
+        <table class="w-full text-left border border-gray-300 rounded mb-4">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-2 border border-gray-300">Descripción</th>
+              <th class="p-2 border border-gray-300">Precio (CLP)</th>
+            </tr>
+          </thead>
+          <tbody id="pricesTableBody">
+            <tr>
+              <td class="p-2 border border-gray-300">
+                <input type="text" name="price_description" value="Cita" class="w-full border border-gray-300 rounded p-1 bg-gray-100 cursor-not-allowed" readonly />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="text" name="price_value" value="{% if prices %}{{ prices.0.price|floatformat:0 }}{% endif %}" min="0" class="w-full border border-gray-300 rounded p-1" required />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="flex space-x-4 mb-4">
+          <!-- Removed Agregar precio button -->
+          <button type="submit" class="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600">Guardar precios</button>
+        </div>
+      </form>
+     </div>
+
+     <!-- New section for uploading photos -->
+     <div class="mt-8 border-t border-gray-200 pt-6">
+       <h2 class="text-xl font-semibold text-gray-900 mb-4">
+         Subir Fotos con Descripción
+       </h2>
+       <form method="post" enctype="multipart/form-data" id="photoUploadForm">
+         {% csrf_token %}
+         <div class="mb-4">
+           <label for="photo" class="block text-gray-700 font-semibold mb-2">Selecciona una foto</label>
+           <input type="file" name="photo" id="photo" accept="image/*" required class="w-full border border-gray-300 rounded p-2" />
+         </div>
+         <div class="mb-4">
+           <label for="description" class="block text-gray-700 font-semibold mb-2">Descripción</label>
+           <input type="text" name="description" id="description" maxlength="255" placeholder="Descripción de la foto" class="w-full border border-gray-300 rounded p-2" />
+         </div>
+         <button type="submit" class="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600">Subir Foto</button>
+       </form>
+     </div>
+      <script>
+        function formatNumberWithThousandSeparators(value) {
+          return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function unformatNumber(value) {
+          return value.replace(/\./g, "");
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+          const pricesTableBody = document.getElementById('pricesTableBody');
+
+          // Format existing input on page load
+          const priceInput = pricesTableBody.querySelector('input[name="price_value"]');
+          if (priceInput && priceInput.value) {
+            priceInput.value = formatNumberWithThousandSeparators(priceInput.value);
+          }
+
+          if (priceInput) {
+            priceInput.addEventListener('focus', function() {
+              this.value = unformatNumber(this.value);
+            });
+
+            priceInput.addEventListener('blur', function() {
+              if (this.value) {
+                this.value = formatNumberWithThousandSeparators(this.value);
+              }
+            });
+          }
+
+          // Before form submit, unformat the price input to plain number
+          const pricesForm = document.getElementById('pricesForm');
+          pricesForm.addEventListener('submit', function(event) {
+            const priceInput = pricesTableBody.querySelector('input[name="price_value"]');
+            if (priceInput) {
+              priceInput.value = unformatNumber(priceInput.value);
+            }
+          });
+        });
+      </script>
+     <div class="mt-8 border-t border-gray-200 pt-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">
+       Información de contacto
+      </h2>
+      <div class="space-y-3 text-gray-700">
+       <div class="flex items-center space-x-3">
+        <i class="fas fa-phone-alt text-[#fbbf24]">
+        </i>
+        {% if professional_profile.telefono %}
+        <a class="hover:underline text-[#fbbf24] font-semibold" href="tel:{{ professional_profile.telefono }}">
+         {{ professional_profile.telefono }}
+        </a>
+        {% else %}
+        <span class="text-gray-500">No disponible</span>
+        {% endif %}
+       </div>
+       <div class="flex items-center space-x-3">
+        <i class="fas fa-envelope text-[#fbbf24]">
+        </i>
+        <a class="hover:underline text-[#fbbf24] font-semibold" href="mailto:{{ professional_profile.user.email }}">
+         {{ professional_profile.user.email }}
+        </a>
+      </div>
+     </div>
+     <div class="mt-8 border-t border-gray-200 pt-6">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">
+       Ubicación
+      </h2>
+      <form method="post" id="ubicacion-form">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="id_ubicacion_ubicacion" class="block text-gray-700 font-semibold mb-2">Cambia tu Ubicación aquí</label>
+          <input type="text" id="id_ubicacion_ubicacion" name="ubicacion" value="{{ professional_profile.ubicacion }}" class="w-full border border-gray-300 rounded p-2" />
+          <input type="hidden" id="id_latitud" name="latitud" value="{{ professional_profile.latitud|default:'' }}" />
+          <input type="hidden" id="id_longitud" name="longitud" value="{{ professional_profile.longitud|default:'' }}" />
+        </div>
+        <button id="guardar-ubicacion-btn" type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 disabled:opacity-50" disabled>Guardar ubicación</button>
+      </form>
+      <div class="space-y-4 mt-4">
+       <div>
+        <p class="font-semibold text-gray-900">{{ professional_profile.ubicacion }}</p>
+        <a class="inline-flex items-center mt-2 text-[#fbbf24] hover:underline" href="https://maps.google.com/?q={{ professional_profile.ubicacion|urlencode }}" rel="noopener noreferrer" target="_blank">
+         <i class="fas fa-map-marked-alt mr-1"></i>Ver en Google Maps
+        </a>
+        <div id="map" style="height: 300px; width: 100%;"
+          data-lat="{{ professional_profile.latitud|stringformat:'f'|cut:',' }}"
+          data-lng="{{ professional_profile.longitud|stringformat:'f'|cut:',' }}"
+          data-location="{{ professional_profile.ubicacion|default:'' }}"
+          data-api-key="{{ google_maps_api_key|safe }}">
+        </div>
+        <script src="{% static 'js/google_maps.js' %}"></script>
+       </div>
+      </div>
+     </div>
+     <div class="mt-8 border-t border-gray-200 pt-6">
+       <h2 class="text-xl font-semibold text-gray-900 mb-4">
+       Horarios de atención
+      </h2>
+      
+      <form method="post" id="scheduleForm" class="text-gray-700 mt-2 space-y-1">
+        {% csrf_token %}
+        <table class="w-full text-left border border-gray-300 rounded">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-2 border border-gray-300">Día</th>
+              <th class="p-2 border border-gray-300">Inicio</th>
+              <th class="p-2 border border-gray-300">Fin</th>
+              <th class="p-2 border border-gray-300">Cerrado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Lunes</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="lunes_start" id="lunes_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.lunes_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="lunes_end" id="lunes_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.lunes_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="lunes_closed" id="lunes_closed" {% if schedule_flat.lunes_closed %}checked{% endif %} />
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Martes</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="martes_start" id="martes_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.martes_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="martes_end" id="martes_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.martes_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="martes_closed" id="martes_closed" {% if schedule_flat.martes_closed %}checked{% endif %} />
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Miércoles</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="miércoles_start" id="miércoles_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.miércoles_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="miércoles_end" id="miércoles_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.miércoles_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="miércoles_closed" id="miércoles_closed" {% if schedule_flat.miércoles_closed %}checked{% endif %} />
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Jueves</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="jueves_start" id="jueves_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.jueves_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="jueves_end" id="jueves_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.jueves_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="jueves_closed" id="jueves_closed" {% if schedule_flat.jueves_closed %}checked{% endif %} />
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Viernes</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="viernes_start" id="viernes_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.viernes_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="viernes_end" id="viernes_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.viernes_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="viernes_closed" id="viernes_closed" {% if schedule_flat.viernes_closed %}checked{% endif %} />
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Sábado</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="sábado_start" id="sábado_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.sábado_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="sábado_end" id="sábado_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.sábado_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="sábado_closed" id="sábado_closed" {% if schedule_flat.sábado_closed %}checked{% endif %} />
+              </td>
+            </tr>
+            <tr>
+              <td class="p-2 border border-gray-300 font-semibold">Domingo</td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="domingo_start" id="domingo_start" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.domingo_start|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300">
+                <input type="time" name="domingo_end" id="domingo_end" class="w-full border border-gray-300 rounded p-1" value="{{ schedule_flat.domingo_end|default:'' }}" />
+              </td>
+              <td class="p-2 border border-gray-300 text-center">
+                <input type="checkbox" name="domingo_closed" id="domingo_closed" {% if schedule_flat.domingo_closed %}checked{% endif %} />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="submit" class="mt-6 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Guardar Horarios</button>
+      </form>
+     </div>
+     </section>
+    <!-- Right column: Reviews and booking -->
+    <aside class="md:w-2/5 mt-10 md:mt-0">
+      <div class="bg-white rounded-lg shadow-md p-6 sticky top-20" style="z-index: 10;">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">
+          Opiniones de Clientes
+        </h2>
+        <!-- Filtros y orden de opiniones -->
+        <div class="mb-4">
+          <div class="flex flex-wrap gap-4 items-center border-b border-gray-200 pb-2 mb-2">
+            <button class="tab-opiniones font-semibold border-b-2 border-black text-black px-2 py-1 focus:outline-none" data-filter="all">Todas las opiniones <span class="text-gray-500">({{ total_reviews }})</span></button>
+            <button class="tab-opiniones text-gray-600 hover:text-black px-2 py-1 focus:outline-none" data-filter="positive">Positivas <span class="text-gray-500">({{ positive_reviews_count }})</span></button>
+            <button class="tab-opiniones text-gray-600 hover:text-black px-2 py-1 focus:outline-none" data-filter="neutral">Neutras <span class="text-gray-500">({{ neutral_reviews_count }})</span></button>
+            <button class="tab-opiniones text-gray-600 hover:text-black px-2 py-1 focus:outline-none" data-filter="negative">Negativas <span class="text-gray-500">({{ negative_reviews_count }})</span></button>
+          </div>
+          <div class="mb-2">
+            <span class="font-semibold">Ordenar opiniones por</span>
+            <div class="inline-flex gap-2 ml-2">
+              <button class="btn-orden bg-gray-100 border border-gray-300 rounded-full px-3 py-1 text-sm font-medium text-gray-800 focus:bg-[#fbbf24] focus:text-white" data-sort="recent">Más recientes</button>
+              <button class="btn-orden bg-gray-100 border border-gray-300 rounded-full px-3 py-1 text-sm font-medium text-gray-800 focus:bg-[#fbbf24] focus:text-white" data-sort="high">Puntuación más alta</button>
+              <button class="btn-orden bg-gray-100 border border-gray-300 rounded-full px-3 py-1 text-sm font-medium text-gray-800 focus:bg-[#fbbf24] focus:text-white" data-sort="low">Puntuación más baja</button>
+            </div>
+          </div>
+        </div>
+        <!-- Fin filtros y orden -->
+        <div class="space-y-6 max-h-[480px] pr-2 overflow-y-auto">
+          {% for review in reviews %}
+          <article class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <div class="flex items-center space-x-3 mb-2">
+              <img alt="Foto de perfil de cliente" class="w-12 h-12 rounded-full object-cover" height="48" src="{{ review.client.foto_url|default:'https://via.placeholder.com/48' }}" width="48" />
+              <div>
+                <p class="font-semibold text-gray-900">{{ review.nombre }}</p>
+                <div class="flex items-center text-yellow-400 text-sm">
+                  {% for i in "12345" %}
+                    {% if review.rating|floatformat:0 >= i %}
+                      <i class="fas fa-star"></i>
+                    {% else %}
+                      <i class="far fa-star"></i>
+                    {% endif %}
+                  {% endfor %}
+                  <span class="ml-2 text-gray-600 font-normal">{{ review.fecha|timesince }} atrás</span>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-700 text-sm leading-relaxed review-opinion">{{ review.opinion }}</p>
+            {% if review.likes %}
+            <div class="mt-2 text-xs text-green-700">👍 {{ review.likes|join:", " }}</div>
+            {% endif %}
+            {% if review.improve %}
+            <div class="mt-1 text-xs text-red-700">⚠️ {{ review.improve|join:", " }}</div>
+            {% endif %}
+            <button class="reply-toggle-btn mt-2 text-sm text-blue-600 hover:underline focus:outline-none" data-review-id="{{ review.id }}">
+              Responder
+            </button>
+            <button class="report-toggle-btn mt-2 ml-4 text-sm text-red-600 hover:underline focus:outline-none" data-review-id="{{ review.id }}">
+              Reportar
+            </button>
+            <!-- Formulario para responder, oculto por defecto -->
+            <form method="post" class="reply-form mt-2 hidden" data-review-id="{{ review.id }}">
+              {% csrf_token %}
+              <textarea name="reply_text" rows="3" class="w-full border border-gray-300 rounded p-2" placeholder="Escribe tu respuesta aquí..."></textarea>
+              <input type="hidden" name="review_id" value="{{ review.id }}">
+              <div class="flex justify-end mt-1 space-x-2">
+                <button type="submit" class="bg-[#fbbf24] text-white px-4 py-1 rounded hover:bg-yellow-500 transition">Enviar</button>
+                <button type="button" class="reply-cancel-btn bg-gray-300 px-4 py-1 rounded hover:bg-gray-400 transition">Cancelar</button>
+              </div>
+            </form>
+            <!-- Formulario para reportar, oculto por defecto -->
+            <form method="post" action="{% url 'ConectaGo:report_review' review.id %}" class="report-form mt-2 hidden" data-review-id="{{ review.id }}">
+              {% csrf_token %}
+              <textarea name="justification" rows="3" class="w-full border border-gray-300 rounded p-2" placeholder="Justificación para reportar esta opinión" required></textarea>
+              <div class="flex justify-end mt-1 space-x-2">
+                <button type="submit" class="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700 transition">Enviar Reporte</button>
+                <button type="button" class="report-cancel-btn bg-gray-300 px-4 py-1 rounded hover:bg-gray-400 transition">Cancelar</button>
+              </div>
+            </form>
+            <!-- Mostrar respuestas -->
+            {% if review.replies.all %}
+            <div class="mt-4 ml-8 border-l-2 border-gray-300 pl-4">
+              <h3 class="font-semibold text-gray-800 mb-2">Respuestas</h3>
+              {% for reply in review.replies.all %}
+              <div class="mb-2 p-2 bg-gray-100 rounded">
+                <p class="text-gray-700 text-sm">{{ reply.texto }}</p>
+                <p class="text-xs text-gray-500 mt-1">Respondido el {{ reply.fecha|date:"d/m/Y H:i" }}</p>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </article>
+          {% empty %}
+          <p class="text-gray-500">Aún no hay opiniones para este profesional.</p>
+          {% endfor %}
+        </div>
+        <button class="mt-6 w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">
+          Ver todas las opiniones
+        </button>
+      </div>
+      <script>
+        document.querySelectorAll('.reply-toggle-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const reviewId = button.getAttribute('data-review-id');
+            const form = document.querySelector(`form.reply-form[data-review-id="${reviewId}"]`);
+            if (form.classList.contains('hidden')) {
+              form.classList.remove('hidden');
+              button.textContent = 'Cerrar respuesta';
+            } else {
+              form.classList.add('hidden');
+              button.textContent = 'Responder';
+            }
+          });
+        });
+
+        document.querySelectorAll('.reply-cancel-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const form = button.closest('form.reply-form');
+            const reviewId = form.getAttribute('data-review-id');
+            form.classList.add('hidden');
+            const toggleBtn = document.querySelector(`button.reply-toggle-btn[data-review-id="${reviewId}"]`);
+            if (toggleBtn) {
+              toggleBtn.textContent = 'Responder';
+            }
+          });
+        });
+
+        // New script for report toggle
+        document.querySelectorAll('.report-toggle-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const reviewId = button.getAttribute('data-review-id');
+            const form = document.querySelector(`form.report-form[data-review-id="${reviewId}"]`);
+            if (form.classList.contains('hidden')) {
+              form.classList.remove('hidden');
+              button.textContent = 'Cerrar reporte';
+            } else {
+              form.classList.add('hidden');
+              button.textContent = 'Reportar';
+            }
+          });
+        });
+
+        document.querySelectorAll('.report-cancel-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            const form = button.closest('form.report-form');
+            const reviewId = form.getAttribute('data-review-id');
+            form.classList.add('hidden');
+            const toggleBtn = document.querySelector(`button.report-toggle-btn[data-review-id="${reviewId}"]`);
+            if (toggleBtn) {
+              toggleBtn.textContent = 'Reportar';
+            }
+          });
+        });
+      </script>
+      </div>
+      <!-- Modal para añadir opinión -->
+      <div id="addReviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-5xl relative mx-2">
+          <button id="closeReviewModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+          <form id="reviewForm" method="post">
+            {% csrf_token %}
+            <div class="flex flex-col md:flex-row gap-10">
+              <!-- Columna izquierda: datos y valoración -->
+              <div class="md:w-1/2 w-full flex flex-col gap-4 justify-center">
+                <h3 class="text-2xl font-bold mb-2 text-[#fbbf24]">¿Cómo fue tu experiencia?</h3>
+                <div class="flex items-center space-x-4 mb-2">
+                  <img src="{{ professional_profile.foto_url }}" alt="Foto profesional" class="w-16 h-16 md:w-20 md:h-20 max-w-full object-cover rounded border" />
+                  <div class="min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">{{ professional_profile.nombre }} {{ professional_profile.apellido }}</p>
+                    <p class="text-gray-500 text-sm truncate">{{ professional_profile.especialidad }}</p>
+                  </div>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Valoración</label>
+                  <div id="starRating" class="flex space-x-1 text-2xl text-yellow-400 cursor-pointer">
+                    <span data-value="1">&#9733;</span>
+                    <span data-value="2">&#9733;</span>
+                    <span data-value="3">&#9733;</span>
+                    <span data-value="4">&#9733;</span>
+                    <span data-value="5">&#9733;</span>
+                  </div>
+                  <input type="hidden" name="rating" id="ratingInput" value="0">
+                  <p class="text-xs text-gray-500 mt-1">De 1 a 5 estrellas, ¿cómo valorarías la experiencia?</p>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1"><i class=\"fas fa-thumbs-up text-yellow-400 mr-2\"></i>¿Qué es lo que más te gustó?</label>
+                  <div class="flex flex-wrap gap-2">
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Explicaciones detalladas" class="mr-1"><i class="fas fa-book-open mr-1 text-yellow-400"></i>Explicaciones detalladas</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Dedicación durante la visita" class="mr-1"><i class="fas fa-user-clock mr-1 text-yellow-400"></i>Dedicación durante la visita</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Eficacia del tratamiento" class="mr-1"><i class="fas fa-check-circle mr-1 text-yellow-400"></i>Eficacia al trabajar</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Puntualidad" class="mr-1"><i class="fas fa-clock mr-1 text-yellow-400"></i>Puntualidad</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Instalaciones excelentes" class="mr-1"><i class="fas fa-building mr-1 text-yellow-400"></i>Instalaciones excelentes</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer"><input type="checkbox" name="likes" value="Otro" class="mr-1"><i class="fas fa-ellipsis-h mr-1 text-yellow-400"></i>Otro</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1"><i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>¿Hay algo que se pueda mejorar?</label>
+                  <div class="flex flex-wrap gap-2">
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Falta de comunicación" class="mr-1"><i class="fas fa-comments mr-1"></i>Falta de comunicación</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Falta de empatía" class="mr-1"><i class="fas fa-handshake mr-1"></i>Falta de respeto</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="La cita fue demasiado corta" class="mr-1"><i class="fas fa-hourglass-half mr-1"></i>La cita fue demasiado corta</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="El tratamiento no me convenció" class="mr-1"><i class="fas fa-times-circle mr-1"></i>El trabajo no me convenció</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Retraso en la visita" class="mr-1"><i class="fas fa-clock mr-1"></i>Retraso en la visita</label>
+                    <label class="px-3 py-1 border rounded cursor-pointer text-red-600"><input type="checkbox" name="improve" value="Otro" class="mr-1"><i class="fas fa-ellipsis-h mr-1"></i>Otro</label>
+                  </div>
+                </div>
+              </div>
+              <!-- Columna derecha: opinión y datos -->
+              <div class="md:w-1/2 w-full flex flex-col justify-center gap-4">
+                <div>
+                  <label class="block font-semibold mb-1">Tu nombre</label>
+                  {% if client_nombre and client_apellido %}
+                    <input type="text" name="nombre" class="w-full border rounded px-3 py-2 mb-2 bg-gray-100" value="{{ client_nombre }} {{ client_apellido }}" readonly>
+                  {% else %}
+                    <input type="text" name="nombre" class="w-full border rounded px-3 py-2 mb-2" placeholder="Tu nombre o iniciales, por ejemplo: M.P.">
+                  {% endif %}
+                </div>
+                <div class="flex items-center mb-2">
+                  <input type="checkbox" name="consent" id="consent" class="mr-2">
+                  <label for="consent" class="text-xs">Consiento el tratamiento de mis datos personales con el fin de añadir una opinión sobre un especialista. <a href="#" class="underline">Saber más</a></label>
+                </div>
+                <input type="hidden" name="review_submit" value="1">
+                <button type="submit" class="w-full bg-[#b6892f] text-white py-2 rounded font-semibold hover:bg-[#a0761c] transition">Enviar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <script>
+        // Modal open/close
+        document.getElementById('addReviewBtn').onclick = function() {
+          document.getElementById('addReviewModal').classList.remove('hidden');
+        };
+        document.getElementById('closeReviewModal').onclick = function() {
+          document.getElementById('addReviewModal').classList.add('hidden');
+        };
+        // Star rating logic
+        const stars = document.querySelectorAll('#starRating span');
+        const ratingInput = document.getElementById('ratingInput');
+        stars.forEach(star => {
+          star.addEventListener('mouseenter', function() {
+            const val = parseInt(this.getAttribute('data-value'));
+            stars.forEach((s, i) => {
+              s.style.color = i < val ? '#fbbf24' : '#d1d5db';
+            });
+          });
+          star.addEventListener('mouseleave', function() {
+            const val = parseInt(ratingInput.value);
+            stars.forEach((s, i) => {
+              s.style.color = i < val ? '#fbbf24' : '#d1d5db';
+            });
+          });
+          star.addEventListener('click', function() {
+            const val = parseInt(this.getAttribute('data-value'));
+            ratingInput.value = val;
+            stars.forEach((s, i) => {
+              s.style.color = i < val ? '#fbbf24' : '#d1d5db';
+            });
+          });
+        });
+        // Filtrado y orden de opiniones (frontend)
+        document.addEventListener('DOMContentLoaded', function() {
+          // Cambiar selector para apuntar solo a los artículos de opiniones
+          const reviewContainer = document.querySelector('.space-y-6');
+          // Filtrar solo los elementos article que son opiniones
+          const allReviews = Array.from(reviewContainer.querySelectorAll('article.border'));
+          const tabBtns = document.querySelectorAll('.tab-opiniones');
+          const sortBtns = document.querySelectorAll('.btn-orden');
+          let currentFilter = 'all';
+          let currentSort = 'recent';
+
+          // Extraer datos de cada review
+          function getReviewData(article) {
+            // Busca el número de estrellas llenas (fas fa-star) dentro del review
+            const stars = article.querySelectorAll('.fa-star:not(.far)');
+            const rating = stars.length;
+            // Para ordenar por fecha, puedes usar el índice del review en el array original (más reciente = menor índice)
+            return {
+              rating: rating || 0,
+              article: article
+            };
+          }
+
+          function filterReviews() {
+            let filtered = allReviews;
+            if (currentFilter === 'positive') {
+              filtered = allReviews.filter(a => getReviewData(a).rating >= 4);
+            } else if (currentFilter === 'neutral') {
+              filtered = allReviews.filter(a => getReviewData(a).rating === 3);
+            } else if (currentFilter === 'negative') {
+              filtered = allReviews.filter(a => getReviewData(a).rating <= 2);
+            }
+            // Fix: Only show the empty message if there are reviews in the backend count for this filter
+            if (filtered.length === 0) {
+              let backendCount = 0;
+              if (currentFilter === 'positive') backendCount = {{ positive_reviews_count }};
+              else if (currentFilter === 'neutral') backendCount = {{ neutral_reviews_count }};
+              else if (currentFilter === 'negative') backendCount = {{ negative_reviews_count }};
+              else backendCount = {{ total_reviews }};
+              if (backendCount > 0) {
+                reviewContainer.innerHTML = '<p class="text-gray-500">Hay opiniones en esta categoría, pero no se pueden mostrar por un error de sincronización. Por favor recarga la página.</p>';
+              }
+            }
+            return filtered;
+          }
+
+          function sortReviews(reviews) {
+            if (currentSort === 'recent') {
+              return reviews; // Ya están ordenadas por fecha reciente desde el backend
+            } else if (currentSort === 'high') {
+              return reviews.slice().sort((a, b) => getReviewData(b).rating - getReviewData(a).rating);
+            } else if (currentSort === 'low') {
+              return reviews.slice().sort((a, b) => getReviewData(a).rating - getReviewData(b).rating);
+            }
+            return reviews;
+          }
+
+          function renderReviews() {
+            // Limpiar
+            reviewContainer.innerHTML = '';
+            let filtered = filterReviews();
+            let sorted = sortReviews(filtered);
+            if (sorted.length === 0) {
+              reviewContainer.innerHTML = '<p class="text-gray-500">Aún no hay opiniones para este profesional.</p>';
+            } else {
+              sorted.forEach(a => reviewContainer.appendChild(a));
+            }
+          }
+
+          tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+              tabBtns.forEach(b => b.classList.remove('font-semibold', 'border-b-2', 'border-black', 'text-black'));
+              this.classList.add('font-semibold', 'border-b-2', 'border-black', 'text-black');
+              currentFilter = this.getAttribute('data-filter');
+              renderReviews();
+            });
+          });
+          sortBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+              sortBtns.forEach(b => b.classList.remove('bg-[#fbbf24]', 'text-white'));
+              this.classList.add('bg-[#fbbf24]', 'text-white');
+              currentSort = this.getAttribute('data-sort');
+              renderReviews();
+            });
+          });
+        });
+        // Form submit AJAX
+        document.getElementById('reviewForm').onsubmit = async function(e) {
+          e.preventDefault();
+          const form = e.target;
+          const formData = new FormData(form);
+          const response = await fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              // No poner Content-Type para que FormData maneje el boundary
+            },
+            body: formData
+          });
+          if (response.ok) {
+            document.getElementById('addReviewModal').classList.add('hidden');
+            form.reset();
+            document.getElementById('ratingInput').value = 0;
+            const data = await response.json();
+            const reviewsDiv = document.querySelector('.space-y-6');
+            const article = document.createElement('article');
+            article.className = 'border border-gray-200 rounded-lg p-4 bg-gray-50';
+            let stars = '';
+            for (let i = 0; i < data.rating; i++) stars += '<i class="fas fa-star"></i>';
+            for (let i = data.rating; i < 5; i++) stars += '<i class="far fa-star"></i>';
+            let likes = data.likes && data.likes.length ? `<div class='mt-2 text-xs text-green-700'>👍 ${data.likes.join(', ')}</div>` : '';
+            let improve = data.improve && data.improve.length ? `<div class='mt-1 text-xs text-red-700'>⚠️ ${data.improve.join(', ')}</div>` : '';
+            article.innerHTML = `
+              <div class="flex items-center space-x-3 mb-2">
+                <img alt="Foto de perfil de cliente" class="w-12 h-12 rounded-full object-cover" height="48" src="${data.foto_url || 'https://via.placeholder.com/48'}" width="48" />
+                <div>
+                  <p class="font-semibold text-gray-900">${data.nombre}</p>
+                  <div class="flex items-center text-yellow-400 text-sm">${stars}<span class="ml-2 text-gray-600 font-normal">ahora</span></div>
+                </div>
+              </div>
+              <p class="text-gray-700 text-sm leading-relaxed review-opinion">${data.opinion}</p>
+              ${likes}
+              ${improve}
+            `;
+            reviewsDiv.prepend(article);
+            const emptyMsg = reviewsDiv.querySelector('p.text-gray-500');
+            if (emptyMsg) emptyMsg.remove();
+          } else {
+            alert('Error al enviar la opinión.');
+          }
+        };
+      </script>
+    </aside>
+  </div>
+</main>
+
+<style>
+/* Limitar el largo del comentario de review para evitar overflow */
+.review-opinion {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  white-space: pre-line;
+}
+</style>
+
+  <!-- Cropping Modal -->
+  <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="cropperModalTitle" aria-describedby="cropperModalDesc">
+    <div class="bg-white rounded-lg p-4 max-w-lg w-full relative">
+      <h2 id="cropperModalTitle" class="text-xl font-semibold mb-4">Editar foto de perfil</h2>
+      <p id="cropperModalDesc" class="mb-4">Ajusta la imagen para que se vea perfecta.</p>
+      <div class="overflow-hidden rounded-lg mb-4">
+        <img id="imageToCrop" src="#" alt="Imagen para recortar" class="w-full max-h-96 object-contain" />
+      </div>
+      <div class="flex justify-between mb-4 space-x-2">
+        <button id="rotateLeft" type="button" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Rotar Izquierda</button>
+        <button id="rotateRight" type="button" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Rotar Derecha</button>
+        <button id="zoomIn" type="button" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Acercar</button>
+        <button id="zoomOut" type="button" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Alejar</button>
+        <button id="resetCropper" type="button" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Resetear</button>
+      </div>
+      <div class="flex justify-end space-x-4">
+        <button id="cancelCrop" type="button" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancelar</button>
+        <button id="confirmCrop" type="button" class="px-4 py-2 rounded bg-[#fbbf24] text-white hover:bg-yellow-500">Confirmar</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}

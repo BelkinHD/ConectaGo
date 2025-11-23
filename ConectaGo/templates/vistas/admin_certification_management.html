@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% block hero_section %}
+{% endblock %}
+{% block title %}Gestión de Certificaciones - Admin{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Gestión de Certificaciones de Profesionales</h1>
+
+<div class="mb-6 p-4 border border-red-400 rounded">
+  <h2 class="text-lg font-semibold text-red-600 mb-2">¿Dónde encuentro el Código de Verificación?</h2>
+  <p class="text-gray-700 mb-4">El Código de verificación de su certificado aparece en la parte inferior derecha del documento. Este código también lo puede encontrar en el correo electrónico de entrega del certificado. Haga click en las imágenes a continuación para ver ejemplos:</p>
+  <div class="flex flex-col md:flex-row justify-between gap-6">
+    <div class="flex-1 text-center">
+      <h3 class="font-semibold mb-2">En el certificado:</h3>
+      <a href="https://certificados.mineduc.cl/certificados-web/mvc/validar/ingresarCodigo#" target="_blank" rel="noopener noreferrer">
+        <img src="{% static 'img/codigo_certificados.png' %}" alt="Ejemplo Código de Verificación en Certificado" class="mx-auto max-w-full rounded shadow-md cursor-pointer hover:shadow-lg transition" />
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for prof in professionals %}
+  <div class="professional-card p-4 rounded-lg shadow-md border border-gray-300 flex flex-col justify-between">
+    <div>
+      <h2 class="professional-name text-xl font-semibold flex items-center gap-2">
+        {{ prof.nombre }} {{ prof.apellido }}
+        {% if prof.certification_status == 'accepted' %}
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-label="Certificado">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+        {% endif %}
+      </h2>
+      <p class="text-gray-700 mb-1"><strong>Especialidad:</strong> {{ prof.especialidad }}</p>
+      <p class="text-gray-700 mb-1"><strong>Nombre Certificado:</strong> {{ prof.nombre_certificado }}</p>
+      <p class="text-gray-700 mb-1"><strong>Entidad Emisora:</strong> {{ prof.entidad_emisora }}</p>
+      <p class="text-gray-700 mb-1"><strong>Fecha Emisión:</strong> {{ prof.fecha_emision }}</p>
+      <p class="text-gray-700 mb-1"><strong>Estado:</strong> <span class="capitalize">{{ prof.certification_status }}</span></p>
+      {% if prof.certification_rejection_message %}
+      <p class="text-red-600 mb-1"><strong>Mensaje Rechazo:</strong> {{ prof.certification_rejection_message }}</p>
+      {% endif %}
+      <p class="mb-2">
+        {% if prof.archivo_pdf %}
+          <a href="{{ prof.archivo_pdf.url }}" target="_blank" class="text-blue-600 hover:underline">Ver PDF</a>
+        {% else %}
+          No disponible
+        {% endif %}
+      </p>
+    </div>
+    <form method="post" class="flex flex-col space-y-2">
+      {% csrf_token %}
+      <input type="hidden" name="professional_id" value="{{ prof.id }}">
+      <button type="submit" name="action" value="accept" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Aceptar</button>
+      <button type="button" onclick="toggleRejectForm({{ prof.id }})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Rechazar</button>
+      <div id="rejectForm-{{ prof.id }}" class="hidden mt-2">
+        <textarea name="rejection_message" rows="3" placeholder="Mensaje de rechazo" class="w-full border border-gray-300 rounded p-2"></textarea>
+        <button type="submit" name="action" value="reject" class="mt-2 bg-red-700 text-white px-3 py-1 rounded hover:bg-red-800">Enviar Rechazo</button>
+      </div>
+    </form>
+  </div>
+  {% empty %}
+  <p class="text-center text-gray-500">No hay profesionales con certificaciones para gestionar.</p>
+  {% endfor %}
+</div>
+
+<script>
+function toggleRejectForm(professionalId) {
+  const form = document.getElementById('rejectForm-' + professionalId);
+  if (form.classList.contains('hidden')) {
+    form.classList.remove('hidden');
+  } else {
+    form.classList.add('hidden');
+  }
+}
+</script>
+
+{% endblock %}

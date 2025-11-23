@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block hero_section %}{% endblock %}
+{% block content %}
+  <link rel="stylesheet" href="{% static 'css/professional_profile_edit.css' %}">
+
+  <main class="container" role="main">
+    <section class="info-panel">
+    </section>
+    <section class="form-area">
+      {% if messages %}
+      <div class="messages-container" role="alert" aria-live="assertive" aria-atomic="true" style="margin-bottom: 1rem;">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}" style="padding: 12px 20px; border-radius: 8px; margin-bottom: 12px; font-weight: 600;
+            {% if 'error' in message.tags %}background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
+            {% elif 'success' in message.tags %}background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+            {% else %}background-color: #cff4fc; color: #055160; border: 1px solid #b6effb;{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <h1>Datos Pesonales</h1>
+      <form id="profileForm" method="post" action="{% url 'ConectaGo:professional_profile_edit' %}" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div>
+          <label for="id_nombre">Nombre</label>
+          {{ form.nombre }}
+          {% if form.nombre.errors %}
+            <div class="error-message">{{ form.nombre.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label for="id_apellido">Apellido</label>
+          {{ form.apellido }}
+          {% if form.apellido.errors %}
+            <div class="error-message">{{ form.apellido.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label for="id_especialidad">Especialidad</label>
+          <!-- Hidden input for dropdown -->
+          <input type="hidden" id="id_especialidad" name="especialidad" value="{{ form.especialidad.value|default_if_none:'' }}" required>
+          <!-- Dropdown button -->
+          <div class="dropdown">
+            <button type="button" id="especialidad-dropdown-btn" class="dropdown-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="especialidad-label">
+              Seleccione una especialidad
+            </button>
+            <div id="especialidad-dropdown-content" class="dropdown-content" role="listbox" tabindex="-1">
+              <input type="text" id="especialidad-dropdown-search" class="dropdown-search" placeholder="Buscar especialidad..."/>
+              <div class="dropdown-optgroup-label">Profesiones que requieren certificación</div>
+              <div class="dropdown-item" data-value="Electricidad" role="option" tabindex="0">Electricidad (requere certificación SEC)</div>
+              <div class="dropdown-item" data-value="Instalador eléctrico Clase D" role="option" tabindex="0">Instalador eléctrico Clase D (residencial hasta 10 kW)</div>
+              <div class="dropdown-item" data-value="Instalador eléctrico Clase C, B o A" role="option" tabindex="0">Instalador eléctrico Clase C, B o A (comercial e industrial)</div>
+              <div class="dropdown-item" data-value="Técnico en mantenimiento de tableros eléctricos" role="option" tabindex="0">Técnico en mantenimiento de tableros eléctricos</div>
+              <div class="dropdown-item" data-value="Instalador de sistemas de puesta a tierra" role="option" tabindex="0">Instalador de sistemas de puesta a tierra</div>
+              <div class="dropdown-item" data-value="Instalador de portones automáticos" role="option" tabindex="0">Instalador de portones automáticos (si interviene la red eléctrica)</div>
+              <div class="dropdown-item" data-value="Técnico en domótica" role="option" tabindex="0">Técnico en domótica (si interviene cableado eléctrico)</div>
+              <div class="dropdown-item" data-value="Instalador de iluminación LED profesional" role="option" tabindex="0">Instalador de iluminación LED profesional (red directa)</div>
+              <div class="dropdown-item" data-value="Gasfitería con gas" role="option" tabindex="0">Gasfitería con gas (requere certificación SEC)</div>
+              <div class="dropdown-item" data-value="Instalador de artefactos a gas" role="option" tabindex="0">Instalador de artefactos a gas (calefón, cocina, estufa)</div>
+              <div class="dropdown-item" data-value="Instalador de redes de gas interior" role="option" tabindex="0">Instalador de redes de gas interior (cobre, flexible)</div>
+              <div class="dropdown-item" data-value="Reparador de fugas de gas domiciliarias" role="option" tabindex="0">Reparador de fugas de gas domiciliarias</div>
+              <div class="dropdown-item" data-value="Instalador de calefactores de tiro balanceado o forzado" role="option" tabindex="0">Instalador de calefactores de tiro balanceado o forzado</div>
+              <div class="dropdown-item" data-value="Técnico en detección de fugas o presión de red de gas" role="option" tabindex="0">Técnico en detección de fugas o presión de red de gas</div>
+              <div class="dropdown-item" data-value="Climatización y Refrigeración" role="option" tabindex="0">Climatización y Refrigeración (refrigerantes y energía)</div>
+              <div class="dropdown-item" data-value="Técnico en instalación de aire acondicionado tipo split" role="option" tabindex="0">Técnico en instalación de aire acondicionado tipo split</div>
+              <div class="dropdown-item" data-value="Técnico en instalación de calefacción central o calderas" role="option" tabindex="0">Técnico en instalación de calefacción central o calderas</div>
+              <div class="dropdown-item" data-value="Instalador de sistemas VRF o multi split" role="option" tabindex="0">Instalador de sistemas VRF o multi split</div>
+              <div class="dropdown-item" data-value="Técnico en cámaras de refrigeración" role="option" tabindex="0">Técnico en cámaras de refrigeración</div>
+              <div class="dropdown-item" data-value="Manipulador de gases refrigerantes" role="option" tabindex="0">Manipulador de gases refrigerantes (requere curso y registro)</div>
+              <div class="dropdown-item" data-value="Energías Renovables" role="option" tabindex="0">Energías Renovables (requere certificación SEC)</div>
+              <div class="dropdown-item" data-value="Instalador de paneles solares fotovoltaicos" role="option" tabindex="0">Instalador de paneles solares fotovoltaicos</div>
+              <div class="dropdown-item" data-value="Instalador de termos solares" role="option" tabindex="0">Instalador de termos solares (agua caliente sanitaria)</div>
+              <div class="dropdown-item" data-value="Técnico en sistemas híbridos solares + red eléctrica" role="option" tabindex="0">Técnico en sistemas híbridos solares + red eléctrica</div>
+              <div class="dropdown-item" data-value="Instalador de inversores y sistemas solares conectados a red" role="option" tabindex="0">Instalador de inversores y sistemas solares conectados a red</div>
+              <div class="dropdown-optgroup-label">Construcción y estructuras</div>
+              <div class="dropdown-item" data-value="Albañil estructural" role="option" tabindex="0">Albañil estructural (en obras reguladas)</div>
+              <div class="dropdown-item" data-value="Instalador de techumbres o cubiertas metálicas" role="option" tabindex="0">Instalador de techumbres o cubiertas metálicas</div>
+              <div class="dropdown-item" data-value="Constructor de ampliaciones con permiso municipal" role="option" tabindex="0">Constructor de ampliaciones con permiso municipal</div>
+              <div class="dropdown-item" data-value="Instalador de ventanas termo-panel certificadas" role="option" tabindex="0">Instalador de ventanas termo-panel certificadas</div>
+              <div class="dropdown-item" data-value="Técnico en aislación térmica certificada" role="option" tabindex="0">Técnico en aislación térmica certificada (programa MINVU)</div>
+              <div class="dropdown-optgroup-label">Elevadores y automatización</div>
+              <div class="dropdown-item" data-value="Técnico en mantenimiento de ascensores" role="option" tabindex="0">Técnico en mantenimiento de ascensores</div>
+              <div class="dropdown-item" data-value="Instalador de montacargas o salvaescalas" role="option" tabindex="0">Instalador de montacargas o salvaescalas</div>
+              <div class="dropdown-item" data-value="Técnico en sistemas automatizados de acceso" role="option" tabindex="0">Técnico en sistemas automatizados de acceso (con red eléctrica)</div>
+              <div class="dropdown-optgroup-label">Seguridad y sistemas electrónicos</div>
+              <div class="dropdown-item" data-value="Instalador de cámaras de seguridad con red eléctrica" role="option" tabindex="0">Instalador de cámaras de seguridad con red eléctrica</div>
+              <div class="dropdown-item" data-value="Instalador de sistemas de alarmas conectadas" role="option" tabindex="0">Instalador de sistemas de alarmas conectadas</div>
+              <div class="dropdown-item" data-value="Técnico en control de acceso biométrico o digital" role="option" tabindex="0">Técnico en control de acceso biométrico o digital</div>
+              <div class="dropdown-optgroup-label">Químicos, pesticidas y sanitización</div>
+              <div class="dropdown-item" data-value="Aplicador de plaguicidas" role="option" tabindex="0">Aplicador de plaguicidas (requere curso acreditado SAG)</div>
+              <div class="dropdown-item" data-value="Desinfectador profesional" role="option" tabindex="0">Desinfectador profesional (con productos químicos regulados)</div>
+              <div class="dropdown-optgroup-label">Profesiones que no requieren certificación</div>
+              <div class="dropdown-item" data-value="Mantenimiento General del Hogar" role="option" tabindex="0">Mantenimiento General del Hogar</div>
+              <div class="dropdown-item" data-value="Ayudante de maestro (multiuso)" role="option" tabindex="0">Ayudante de maestro (multiuso)</div>
+              <div class="dropdown-item" data-value="Reparador general de viviendas" role="option" tabindex="0">Reparador general de viviendas</div>
+              <div class="dropdown-item" data-value="Técnico en terminaciones menores" role="option" tabindex="0">Técnico en terminaciones menores</div>
+              <div class="dropdown-item" data-value="Pintor de interiores y exteriores" role="option" tabindex="0">Pintor de interiores y exteriores</div>
+              <div class="dropdown-item" data-value="Aplicador de papel mural" role="option" tabindex="0">Aplicador de papel mural</div>
+              <div class="dropdown-item" data-value="Empastador y masillador de muros" role="option" tabindex="0">Empastador y masillador de muros</div>
+              <div class="dropdown-item" data-value="Instalador de cerámicas o porcelanato" role="option" tabindex="0">Instalador de cerámicas o porcelanato (no estructural)</div>
+              <div class="dropdown-item" data-value="Colocador de alfombras y pisos flotantes" role="option" tabindex="0">Colocador de alfombras y pisos flotantes</div>
+            </div>
+          </div>
+          </div>
+        </div>
+        
+        <div>
+          <label for="id_telefono">Teléfono</label>
+          {{ form.telefono }}
+          {% if form.telefono.errors %}
+            <div class="error-message">{{ form.telefono.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label for="id_email">Correo</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="error-message">{{ form.email.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label for="id_password">Contraseña</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="error-message">{{ form.password.errors }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <label for="id_confirm_password">Confirmar Contraseña</label>
+          {{ form.confirm_password }}
+          {% if form.confirm_password.errors %}
+            <div class="error-message">{{ form.confirm_password.errors }}</div>
+          {% endif %}
+        </div>
+          <div id="certification_fields">
+            <div>
+              <label for="id_nombre_certificado">Nombre Certificado</label>
+              {{ form.nombre_certificado }}
+              {% if form.nombre_certificado.errors %}
+                <div class="error-message">{{ form.nombre_certificado.errors }}</div>
+              {% endif %}
+            </div>
+            <div>
+              <label for="id_entidad_emisora">Entidad Emisora</label>
+              {{ form.entidad_emisora }}
+              {% if form.entidad_emisora.errors %}
+                <div class="error-message">{{ form.entidad_emisora.errors }}</div>
+              {% endif %}
+            </div>
+            <div>
+              <label for="id_fecha_emision">Fecha Emisión</label>
+              <input type="date" id="id_fecha_emision" name="fecha_emision" 
+                value="{{ form.fecha_emision.value|stringformat:'s'|default_if_none:'' }}" />
+              {% if form.fecha_emision.errors %}
+                <div class="error-message">{{ form.fecha_emision.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="full-width">
+              <label for="id_archivo_pdf">Archivo PDF</label>
+              {{ form.archivo_pdf }}
+              {% if form.archivo_pdf.errors %}
+                <div class="error-message">{{ form.archivo_pdf.errors }}</div>
+              {% endif %}
+              {% if professional_profile and professional_profile.archivo_pdf %}
+                <p>Archivo actual: <a href="{{ professional_profile.archivo_pdf.url }}" target="_blank">{{ professional_profile.archivo_pdf.name }}</a></p>
+              {% endif %}
+            </div>
+          </div>
+        <div class="button-wrapper full-width">
+          <button type="submit" aria-label="Guardar perfil">Actualizar Perfil</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Cropper Modal -->
+  <div id="cropperModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="cropperModalLabel">
+    <div class="bg-white rounded-lg p-4 max-w-lg w-full">
+      <h2 id="cropperModalLabel" class="text-xl font-semibold mb-4">Recortar Imagen de Perfil</h2>
+      <div class="cropper-container mb-4">
+        <img id="imageToCrop" src="" alt="Imagen para recortar" class="max-w-full max-h-96 mx-auto" />
+      </div>
+      <div class="flex justify-between mb-4">
+        <button type="button" id="rotateLeft" class="btn">Rotar Izquierda</button>
+        <button type="button" id="rotateRight" class="btn">Rotar Derecha</button>
+        <button type="button" id="zoomIn" class="btn">Acercar</button>
+        <button type="button" id="zoomOut" class="btn">Alejar</button>
+        <button type="button" id="resetCropper" class="btn">Resetear</button>
+      </div>
+      <div class="flex justify-end space-x-4">
+        <button type="button" id="cancelCrop" class="btn btn-secondary">Cancelar</button>
+        <button type="button" id="confirmCrop" class="btn btn-primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="{% static 'js/professional_profile_edit.js' %}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const hiddenInput = document.getElementById('id_especialidad');
+      const dropdownBtn = document.getElementById('especialidad-dropdown-btn');
+      const dropdownContent = document.getElementById('especialidad-dropdown-content');
+      const placeholderText = "Seleccione una especialidad";
+
+      if (hiddenInput && dropdownBtn && dropdownContent) {
+        if (hiddenInput.value) {
+          const selectedItem = Array.from(dropdownContent.querySelectorAll('.dropdown-item')).find(item => item.dataset.value === hiddenInput.value);
+          if (selectedItem) {
+            dropdownBtn.textContent = selectedItem.textContent;
+          } else {
+            dropdownBtn.textContent = placeholderText;
+          }
+        } else {
+          dropdownBtn.textContent = placeholderText;
+        }
+      }
+    });
+  </script>
+{% endblock %}

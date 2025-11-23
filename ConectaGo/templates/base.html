@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ConectaGO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="bg-white">
+
+<!-- HEADER -->
+<header class="bg-[#eab308] shadow-md">
+  <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+    <a href="{% url 'ConectaGo:home' %}">
+      <img src="{% static 'img/CgLogo.png' %}" alt="ConectaGo Logo" class="w-29 h-16" />
+    </a>
+    <nav class="hidden sm:flex items-center space-x-6 text-white text-sm font-medium">
+      <a href="{% url 'ConectaGo:nosotros' %}" class="hover:underline">Nosotros</a>
+      {% if user.is_authenticated and user.professionalprofile or user.clientprofile %}
+      <div class="relative ml-4">
+        <button id="notification-bell" class="text-white hover:text-yellow-300 focus:outline-none relative" aria-haspopup="true" aria-expanded="false" aria-controls="notification-dropdown">
+          <i class="fas fa-bell fa-lg"></i>
+          {% if appointment_notifications.appointment_count > 0 %}
+            <span id="notification-badge" class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/2">
+              {% if appointment_notifications.appointment_count > 9 %}
+                +9
+              {% else %}
+                {{ appointment_notifications.appointment_count }}
+              {% endif %}
+            </span>
+          {% endif %}
+        </button>
+          <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 max-h-96 overflow-y-auto" role="menu" aria-orientation="vertical" aria-labelledby="notification-bell" tabindex="-1">
+          <div class="py-2">
+            {% if appointment_notifications.appointment_count == 0 %}
+              <p class="px-4 py-2 text-gray-700 text-sm">No tienes citas agendadas.</p>
+            {% else %}
+              {% for appointment in appointment_notifications.appointments %}
+                <a href="{% url 'ConectaGo:mis_citas_profesional' %}" class="block px-4 py-2 text-gray-700 hover:bg-yellow-100 hover:text-yellow-900 text-sm truncate" role="menuitem" tabindex="-1">
+                  Cita con {{ appointment.client.nombre }} {{ appointment.client.apellido }} el {{ appointment.date|date:"d/m/Y" }} a las {{ appointment.time|time:"H:i" }}
+                </a>
+              {% endfor %}
+              {% for cert_notif in appointment_notifications.certification_notifications %}
+                <div class="px-4 py-2 text-red-700 bg-red-100 rounded mb-1 text-sm truncate" role="menuitem" tabindex="-1">
+                  {{ cert_notif.message }}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% if user.is_authenticated %}
+        <div class="relative inline-block text-left">
+          <button id="user-menu-button" type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-500 text-sm font-medium text-white hover:bg-yellow-600 focus:outline-none" aria-expanded="true" aria-haspopup="true">
+            Bienvenido, {{ user.username }}
+            <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div id="user-menu" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden" style="z-index: 50;" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+            <div class="py-1" role="none">
+            {% if user.is_superuser %}
+                <a href="{% url 'ConectaGo:admin_profile_edit' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Datos Personales</a>
+                <a href="{% url 'ConectaGo:admin_user_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Usuarios</a>
+                <a href="{% url 'ConectaGo:chat' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Chat</a>
+                <a href="{% url 'ConectaGo:admin_analisis' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Análisis</a>
+                <a href="{% url 'ConectaGo:admin_certification_management' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Validar certificados</a>
+                <a href="{% url 'ConectaGo:reportes' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Reportes</a>
+                <a href="{% url 'ConectaGo:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Cerrar Sesión</a>
+            {% else %}
+                {% comment %} Assuming professional users have a profile attribute professionalprofile {% endcomment %}
+                {% if user.professionalprofile %}
+                <a href="{% url 'ConectaGo:mi_perfil_profesional' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Mi Perfil Profesional</a>
+                <a href="{% url 'ConectaGo:mis_citas_profesional' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Mis Citas</a>
+                <a href="{% url 'ConectaGo:chat' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Chat</a>
+                <a href="{% url 'ConectaGo:professional_profile_edit' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Datos Personales</a>
+                <a href="{% url 'ConectaGo:borrar_cuenta_profesional' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Borrar Cuenta</a>
+                <a href="{% url 'ConectaGo:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Cerrar Sesión</a>
+                {% else %}
+                <a href="{% url 'ConectaGo:client_profile_edit' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Datos Personales</a>
+                <a href="{% url 'ConectaGo:cliente_citas' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Mis Citas</a>
+                <a href="{% url 'ConectaGo:chat' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Chat</a>
+                <a href="{% url 'ConectaGo:borrar_cuenta_cliente' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Borrar Cuenta</a>
+                <a href="{% url 'ConectaGo:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">Cerrar Sesión</a>
+                {% endif %}
+            {% endif %}
+            </div>
+          </div>
+        </div>
+        <script>
+          document.getElementById('user-menu-button').addEventListener('click', function() {
+            var menu = document.getElementById('user-menu');
+            if (menu.classList.contains('hidden')) {
+              menu.classList.remove('hidden');
+            } else {
+              menu.classList.add('hidden');
+            }
+          });
+          document.addEventListener('click', function(event) {
+            var button = document.getElementById('user-menu-button');
+            var menu = document.getElementById('user-menu');
+            if (!button.contains(event.target) && !menu.contains(event.target)) {
+              menu.classList.add('hidden');
+            }
+          });
+        </script>
+      {% else %}
+        <a href="{% url 'ConectaGo:login' %}" class="hover:underline">Iniciar sesión</a>
+        <a href="{% url 'ConectaGo:client_register' %}">Registrarme</a>
+        <a href="{% url 'ConectaGo:professional_register' %}" class="bg-white text-[#eab308] border border-white rounded-full px-4 py-1 hover:bg-gray-100 transition">
+          ¿Eres un trabajador?
+        </a>
+      {% endif %}
+    </nav>
+    <button class="sm:hidden text-white" id="mobile-menu-button">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+</header>
+
+{% block hero_section %}
+<!-- HERO SECTION FIJO -->
+<section class="bg-[#eab308] py-12">
+  <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between px-6">
+    
+    <!-- Imagen izquierda -->
+    <div class="w-full max-w-md mb-6 lg:mb-0">
+      <img src="{% static 'img/HomeP.png' %}" alt="Ilustración de técnicos" class="w-full rounded-md">
+    </div>
+
+    <!-- Texto y formulario -->
+    <div class="w-full max-w-xl text-white">
+      <h1 class="text-3xl sm:text-4xl font-extrabold mb-4">Encuentra tu técnico y pide cita</h1>
+      <form method="get" action="{% url 'ConectaGo:home' %}" class="flex items-stretch bg-[#a16207] rounded-md overflow-hidden shadow-lg">
+        <input type="text" name="profesion" placeholder="Técnico General" class="w-full px-4 py-3 text-black focus:outline-none placeholder-gray-600 text-sm">
+          <select name="ubicacion" class="px-4 py-3 text-sm text-black focus:outline-none bg-white">
+          {% for comuna in ubicaciones %}
+            <option value="{{ comuna }}" {% if comuna == ubicacion %}selected{% endif %}>{{ comuna }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="bg-[#a3e635] text-white px-4 flex items-center justify-center hover:bg-lime-400 transition">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+<!-- CONTENIDO DINÁMICO -->
+<main class="container mx-auto px-4 py-8">
+  {% block content %}
+  {% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-800 text-white text-center py-6 mt-10">
+  <p>&copy; 2025 ConectaGo. Todos los derechos reservados.</p>
+  <button id="poblar-tablas-btn" style="margin-top:10px;" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Poblar Tablas</button>
+  <div id="poblar-tablas-resultado" style="color:yellow;margin-top:10px;"></div>
+  <script>
+    document.getElementById('poblar-tablas-btn').onclick = function() {
+      if (!confirm('¿Estás seguro de que quieres poblar las tablas?')) return;
+      fetch('{% url "ConectaGo:poblar_tablas" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          document.getElementById('poblar-tablas-resultado').innerText = data.output;
+        } else {
+          document.getElementById('poblar-tablas-resultado').innerText = 'Error: ' + (data.error || 'Desconocido');
+        }
+      })
+      .catch(e => {
+        document.getElementById('poblar-tablas-resultado').innerText = 'Error: ' + e;
+      });
+    };
+  </script>
+</footer>
+
+<script src="{% static 'js/notification_bell.js' %}"></script>
+</body>
+</html>

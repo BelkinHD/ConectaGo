@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+  <h1 class="text-3xl font-extrabold mb-6 text-gray-800">Método de Pago</h1>
+  <div class="max-w-lg mx-auto bg-white p-6 rounded shadow">
+    <p>Detalles de la cita:</p>
+    <ul class="mb-4">
+      <li><strong>Fecha:</strong> {{ appointment.date|date:"d/m/Y" }}</li>
+      <li><strong>Hora:</strong> {{ appointment.time|time:"H:i" }}</li>
+      <li><strong>Cliente:</strong> {{ appointment.client.nombre }} {{ appointment.client.apellido }}</li>
+      <li><strong>Servicio:</strong> {{ appointment.service.description }}</li>
+      <li><strong>Estado:</strong> {{ appointment.status_display }}</li>
+      <li><strong>Valor:</strong> ${{ price|floatformat:0 }}</li>
+    </ul>
+    <p>Seleccione el método de pago:</p>
+    <div class="flex space-x-4">
+      <form method="get" action="{% url 'ConectaGo:webpay_simulacion_pago' appointment.id %}">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Pago Online</button>
+      </form>
+      <form method="post" action="{% url 'ConectaGo:pago_efectivo' appointment.id %}">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Pago en Efectivo</button>
+      </form>
+    </div>
+    <a href="{% url 'ConectaGo:cliente_citas' %}" class="text-blue-600 hover:underline mt-4 inline-block">Volver a Mis Citas</a>
+  </div>
+{% endblock %}

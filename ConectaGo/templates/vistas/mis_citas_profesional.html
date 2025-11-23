@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block hero_section %}
+{# Ocultar la sección hero para mantener uniformidad con cliente_citas.html #}
+{% endblock %}
+
+{% block content %}
+<style>
+.status-atrasada {
+    color: #2563eb; /* blue-600 */
+    font-weight: 600;
+}
+.status-normal {
+    color: #2563eb; /* blue-600 */
+    font-weight: 600;
+}
+.mis-citas-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+.mis-citas-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+.mis-citas-table th, .mis-citas-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    vertical-align: middle;
+    background-color: white;
+    border: 1px solid #e5e7eb; /* gray-200 */
+}
+.mis-citas-table thead th {
+    background-color: #fbbf24; /* yellow-400 */
+    color: white;
+    border-bottom: 2px solid #f59e0b; /* yellow-500 */
+    border-radius: 0;
+}
+.mis-citas-table tbody tr:hover {
+    background-color: #fef3c7; /* yellow-100 */
+}
+button.cancel-btn {
+    background-color: #dc2626; /* red-600 */
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+button.cancel-btn:hover {
+    background-color: #b91c1c; /* red-700 */
+}
+button.details-btn {
+    background: none;
+    color: #2563eb; /* blue-600 */
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+button.details-btn:hover {
+    background-color: #e0e7ff; /* blue-100 */
+    border-color: #2563eb; /* blue-600 */
+}
+a.message-btn {
+    background-color: #2563eb; /* blue-600 */
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+a.message-btn:hover {
+    background-color: #1e40af; /* blue-800 */
+}
+</style>
+
+<div class="mis-citas-container max-w-7xl mx-auto p-6 bg-white rounded shadow mt-6">
+    <h1 class="mis-citas-title text-3xl font-bold mb-6 text-gray-800">Mis Citas Profesionales</h1>
+
+    {% if appointments %}
+    <table class="mis-citas-table w-full border border-gray-300 rounded table-auto">
+        <thead class="bg-yellow-400 text-white">
+            <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr class="hover:bg-yellow-50">
+                <td>{{ appointment.date|date:"d/m/Y" }}</td>
+                <td>{{ appointment.time|time:"H:i" }}</td>
+                <td>{{ appointment.client.nombre }} {{ appointment.client.apellido }}</td>
+                <td class="status-normal">
+                    {{ appointment.status_display }}
+                </td>
+                <td class="mis-citas-actions">
+                    <form method="post" action="{% url 'ConectaGo:cancel_appointment' appointment.id %}" class="inline" onsubmit="return confirmCancel(event, {{ appointment.id }})" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="cancel_reason" id="cancel_reason_{{ appointment.id }}" value="">
+                        <button type="submit" class="cancel-btn" style="margin: 0;">Cancelar</button>
+                    </form>
+                    <button onclick="showDetailsModal({{ appointment.id }})" class="details-btn" style="margin: 0;">Más detalles</button>
+                    <a href="{% url 'ConectaGo:chat' %}" class="message-btn" style="margin: 0;">Mandar Mensaje</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-gray-600">No tienes citas agendadas.</p>
+    {% endif %}
+</div>
+
+<!-- Cancel Reason Modal -->
+<div id="cancelModal" class="modal-overlay hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="modal-content bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
+        <h2 class="modal-header text-2xl font-bold mb-4 text-gray-800">Confirmar Cancelación</h2>
+        <p>¿Estás seguro que deseas cancelar esta cita?</p>
+        <textarea id="cancelReasonText" placeholder="Motivo de la cancelación" class="modal-textarea border border-gray-300 rounded p-2 w-full mb-4" rows="3"></textarea>
+        <div class="modal-buttons flex justify-end gap-4">
+            <button onclick="hideCancelModal()" class="modal-button-cancel px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancelar</button>
+            <button onclick="confirmCancelSubmit()" class="modal-button-confirm cancel px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div id="rescheduleModal" class="modal-overlay hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="modal-content bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
+        <h2 class="modal-header text-2xl font-bold mb-4 text-gray-800">Reagendar Cita</h2>
+        <p>Por favor, ingresa el motivo para reagendar la cita:</p>
+        <textarea id="rescheduleReasonText" placeholder="Motivo para reagendar" class="modal-textarea border border-gray-300 rounded p-2 w-full mb-4" rows="3"></textarea>
+        <div class="modal-buttons flex justify-end gap-4">
+            <button onclick="hideRescheduleModal()" class="modal-button-cancel px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">Cancelar</button>
+            <button onclick="confirmRescheduleSubmit()" class="modal-button-confirm reschedule px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Enviar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCancelForm = null;
+let currentCancelAppointmentId = null;
+
+function confirmCancel(event, appointmentId) {
+    event.preventDefault();
+    currentCancelForm = event.target;
+    currentCancelAppointmentId = appointmentId;
+    document.getElementById('cancelModal').classList.remove('hidden');
+    return false;
+}
+
+function hideCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+    currentCancelForm = null;
+    currentCancelAppointmentId = null;
+    document.getElementById('cancelReasonText').value = '';
+}
+
+function confirmCancelSubmit() {
+    const reason = document.getElementById('cancelReasonText').value.trim();
+    if (!reason) {
+        alert('Por favor ingresa el motivo de la cancelación.');
+        return;
+    }
+    document.getElementById('cancel_reason_' + currentCancelAppointmentId).value = reason;
+    currentCancelForm.submit();
+    hideCancelModal();
+}
+
+let currentRescheduleAppointmentId = null;
+
+function showRescheduleModal(appointmentId) {
+    currentRescheduleAppointmentId = appointmentId;
+    document.getElementById('rescheduleModal').classList.remove('hidden');
+}
+
+function hideRescheduleModal() {
+    document.getElementById('rescheduleModal').classList.add('hidden');
+    currentRescheduleAppointmentId = null;
+    document.getElementById('rescheduleReasonText').value = '';
+}
+
+function confirmRescheduleSubmit() {
+    const reason = document.getElementById('rescheduleReasonText').value.trim();
+    if (!reason) {
+        alert('Por favor ingresa el motivo para reagendar.');
+        return;
+    }
+    // Submit the reschedule reason to backend via POST form
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/reschedule_appointment/' + currentRescheduleAppointmentId + '/';
+
+    // Add CSRF token
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    // Add reschedule reason input
+    const reasonInput = document.createElement('input');
+    reasonInput.type = 'hidden';
+    reasonInput.name = 'reschedule_reason';
+    reasonInput.value = reason;
+    form.appendChild(reasonInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
+<!-- Details Modal -->
+<div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Detalles de la Cita</h2>
+    <div id="detailsContent" class="mb-4 text-gray-700 text-base leading-relaxed break-words max-w-full overflow-wrap-anywhere">
+      <!-- Appointment details will be populated here -->
+    </div>
+    <div class="flex justify-end">
+      <button onclick="hideDetailsModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const appointmentsData = {
+    {% for appointment in appointments %}
+      "{{ appointment.id }}": {
+        date: "{{ appointment.date|date:'d/m/Y' }}",
+        time: "{{ appointment.time|time:'H:i' }}",
+        client: "{{ appointment.client.nombre }} {{ appointment.client.apellido }}",
+        service: "{{ appointment.service.description }}",
+        status: "{{ appointment.status_display }}",
+        cancel_reason: "{{ appointment.cancel_reason|default_if_none:''|escapejs }}",
+        client_message: "{{ appointment.client_message|default_if_none:''|escapejs }}"
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  function showDetailsModal(appointmentId) {
+    const modal = document.getElementById('detailsModal');
+    const contentDiv = document.getElementById('detailsContent');
+    const appt = appointmentsData[appointmentId];
+    if (!appt) {
+      contentDiv.innerHTML = "<p>Detalles no disponibles.</p>";
+    } else {
+      let html = "";
+      html += "<p><strong>Fecha:</strong> " + appt.date + "</p>";
+      html += "<p><strong>Hora:</strong> " + appt.time + "</p>";
+      html += "<p><strong>Cliente:</strong> " + appt.client + "</p>";
+      html += "<p><strong>Servicio:</strong> " + appt.service + "</p>";
+      html += "<p><strong>Estado:</strong> " + appt.status + "</p>";
+      if (appt.status.toLowerCase() === 'cancelada' && appt.cancel_reason) {
+        html += "<p><strong>Motivo de cancelación:</strong> " + appt.cancel_reason + "</p>";
+      }
+      if (appt.client_message) {
+        html += "<p><strong>Mensaje del cliente:</strong> " + appt.client_message + "</p>";
+      }
+      contentDiv.innerHTML = html;
+    }
+    modal.classList.remove('hidden');
+  }
+
+  function hideDetailsModal() {
+    const modal = document.getElementById('detailsModal');
+    modal.classList.add('hidden');
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
+  <h1 class="text-2xl font-bold mb-4">Reportar Opinión</h1>
+  <p class="mb-4">Estás reportando la siguiente opinión:</p>
+  <blockquote class="border-l-4 border-yellow-400 pl-4 italic mb-6">
+    {{ review.opinion }}
+  </blockquote>
+
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ form.justification.label_tag }}
+    {{ form.justification }}
+    {% if form.justification.errors %}
+      <p class="text-red-600 text-sm">{{ form.justification.errors }}</p>
+    {% endif %}
+    <div>
+      <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Enviar Reporte</button>
+      <a href="{% url 'ConectaGo:mi_perfil_profesional' %}" class="ml-4 text-gray-600 hover:underline">Cancelar</a>
+    </div>
+  </form>
+</main>
+{% endblock %}
